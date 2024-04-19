@@ -19,3 +19,11 @@ list(APPEND LIB_LIST ${EIGEN3_LIB_NAME})
 find_package(glfw3 CONFIG REQUIRED)
 set(GLFW3_LIB_NAME glfw)
 list(APPEND LIB_LIST ${GLFW3_LIB_NAME})
+
+find_package(Vulkan REQUIRED)
+set(VULKAN_LIB_NAME ${Vulkan_LIBRARIES})
+list(APPEND LIB_LIST ${VULKAN_LIB_NAME})
+
+add_subdirectory(code)
+
+add_subdirectory(demo)
