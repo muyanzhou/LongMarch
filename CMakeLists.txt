@@ -14,6 +14,8 @@ set(CMAKE_CUDA_STANDARD 17)
 
 find_package(Eigen3 CONFIG REQUIRED)
 set(EIGEN3_LIB_NAME Eigen3::Eigen)
+list(APPEND LIB_LIST ${EIGEN3_LIB_NAME})
 
 find_package(glfw3 CONFIG REQUIRED)
 set(GLFW3_LIB_NAME glfw)
+list(APPEND LIB_LIST ${GLFW3_LIB_NAME})
