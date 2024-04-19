@@ -12,6 +12,10 @@ project(LongMarch)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CUDA_STANDARD 17)
 
+find_package(fmt CONFIG REQUIRED)
+set(FMT_LIB_NAME fmt::fmt-header-only) # fmt::fmt is also available
+list(APPEND LIB_LIST ${FMT_LIB_NAME})
+
 find_package(Eigen3 CONFIG REQUIRED)
 set(EIGEN3_LIB_NAME Eigen3::Eigen)
 list(APPEND LIB_LIST ${EIGEN3_LIB_NAME})

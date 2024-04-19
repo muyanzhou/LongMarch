@@ -1,27 +1,35 @@
 #include "iostream"
 #include "long_march.h"
+#include "memory"
+
+template <class ContentType>
+class LifeTimeTracker {
+ public:
+  template <class... Args>
+  LifeTimeTracker(Args &&...args) : content(std::forward<Args>(args)...) {
+    std::cout << "LifeTimeTracker constructor: " << content << std::endl;
+  }
+  ~LifeTimeTracker() {
+    std::cout << "LifeTimeTracker destructor: " << content << std::endl;
+  }
+
+ private:
+  ContentType content;
+};
+
+void CreateInt(grassland::utils::double_ptr<LifeTimeTracker<int>> ppInt,
+               int value) {
+  ppInt = new LifeTimeTracker<int>(value);
+}
 
 int main() {
-  if (!glfwInit()) {
-    std::cerr << "Failed to initialize GLFW" << std::endl;
-    throw std::runtime_error("Failed to initialize GLFW");
+  std::shared_ptr<LifeTimeTracker<int>> pInt;
+  std::unique_ptr<LifeTimeTracker<int>> upInt;
+  LifeTimeTracker<int> *rawInt = nullptr;
+  {
+    CreateInt(&pInt, 20);
+    CreateInt(&upInt, 30);
+    CreateInt(&rawInt, 10);
+    delete rawInt;
   }
-
-  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-  GLFWwindow *window =
-      glfwCreateWindow(800, 600, "Hello World", nullptr, nullptr);
-
-  if (!window) {
-    std::cerr << "Failed to create window" << std::endl;
-    throw std::runtime_error("Failed to create window");
-  }
-
-  while (!glfwWindowShouldClose(window)) {
-    glfwPollEvents();
-  }
-
-  glfwDestroyWindow(window);
-
-  glfwTerminate();
 }

@@ -1,4 +1,6 @@
 #pragma once
 #include "grassland/grassland.h"
 
-namespace LongMarch {}
+namespace LongMarch {
+using namespace grassland;
+}
