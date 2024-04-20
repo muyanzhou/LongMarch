@@ -21,4 +21,5 @@ class Application {
   GLFWwindow *window_;
 
   std::shared_ptr<long_march::vulkan::Instance> instance_;
+  std::shared_ptr<long_march::vulkan::Surface> surface_;
 };

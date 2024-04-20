@@ -2,6 +2,7 @@
 
 #include <utility>
 
+#include "grassland/vulkan/surface.h"
 #include "grassland/vulkan/validation_layer.h"
 
 namespace grassland::vulkan {
@@ -42,25 +43,7 @@ void InstanceCreateInfo::ApplyGLFWSurfaceSupport() {
       extensions.push_back(glfw_extensions[i]);
     }
   }
-}
-
-Instance::Instance(InstanceCreateInfo create_info,
-                   VkInstance instance,
-                   VkDebugUtilsMessengerEXT debug_messenger,
-                   InstanceProcedures instance_procedures)
-    : create_info_(std::move(create_info)),
-      instance_(instance),
-      debug_messenger_(debug_messenger),
-      instance_procedures_(instance_procedures) {
-}
-
-Instance::~Instance() {
-  if (create_info_.enable_validation_layers) {
-    instance_procedures_.vkDestroyDebugUtilsMessengerEXT(
-        instance_, debug_messenger_, nullptr);
-  }
-
-  vkDestroyInstance(instance_, nullptr);
+  glfw_surface_support = true;
 }
 
 VkResult CreateInstance(InstanceCreateInfo create_info,
@@ -145,4 +128,50 @@ VkResult CreateInstance(InstanceCreateInfo create_info,
 
   return VK_SUCCESS;
 }
+
+Instance::Instance(InstanceCreateInfo create_info,
+                   VkInstance instance,
+                   VkDebugUtilsMessengerEXT debug_messenger,
+                   InstanceProcedures instance_procedures)
+    : create_info_(std::move(create_info)),
+      instance_(instance),
+      debug_messenger_(debug_messenger),
+      instance_procedures_(instance_procedures) {
+}
+
+Instance::~Instance() {
+  if (create_info_.enable_validation_layers) {
+    instance_procedures_.vkDestroyDebugUtilsMessengerEXT(
+        instance_, debug_messenger_, nullptr);
+  }
+
+  vkDestroyInstance(instance_, nullptr);
+}
+
+VkResult Instance::CreateSurfaceFromGLFWWindow(
+    GLFWwindow *window,
+    double_ptr<Surface> pp_surface) const {
+  if (!create_info_.glfw_surface_support) {
+    Warning("GLFW surface support is not enabled.");
+  }
+
+  VkSurfaceKHR surface{nullptr};
+  VkResult result =
+      glfwCreateWindowSurface(instance_, window, nullptr, &surface);
+  if (result != VK_SUCCESS) {
+    SetErrorMessage("failed to create window surface.");
+    return result;
+  }
+
+  if (pp_surface) {
+    pp_surface.set(this, window, surface);
+  } else {
+    vkDestroySurfaceKHR(instance_, surface, nullptr);
+    SetErrorMessage("pp_surface is nullptr.");
+    return VK_ERROR_UNKNOWN;
+  }
+
+  return VK_SUCCESS;
+}
+
 }  // namespace grassland::vulkan

@@ -34,6 +34,11 @@ void Application::OnInit() {
   if (result != VK_SUCCESS) {
     throw std::runtime_error("Failed to create Vulkan instance");
   }
+
+  result = instance_->CreateSurfaceFromGLFWWindow(window_, &surface_);
+  if (result != VK_SUCCESS) {
+    throw std::runtime_error("Failed to create Vulkan surface");
+  }
 }
 
 void Application::OnUpdate() {
@@ -43,5 +48,6 @@ void Application::OnRender() {
 }
 
 void Application::OnShutdown() {
+  surface_.reset();
   instance_.reset();
 }
