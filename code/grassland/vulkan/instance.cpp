@@ -44,17 +44,37 @@ void InstanceCreateInfo::ApplyGLFWSurfaceSupport() {
   }
 }
 
-Instance::Instance(grassland::vulkan::InstanceCreateInfo create_info)
-    : create_info_(std::move(create_info)) {
+Instance::Instance(InstanceCreateInfo create_info,
+                   VkInstance instance,
+                   VkDebugUtilsMessengerEXT debug_messenger,
+                   InstanceProcedures instance_procedures)
+    : create_info_(std::move(create_info)),
+      instance_(instance),
+      debug_messenger_(debug_messenger),
+      instance_procedures_(instance_procedures) {
+}
+
+Instance::~Instance() {
+  if (create_info_.enable_validation_layers) {
+    instance_procedures_.vkDestroyDebugUtilsMessengerEXT(
+        instance_, debug_messenger_, nullptr);
+  }
+
+  vkDestroyInstance(instance_, nullptr);
+}
+
+VkResult CreateInstance(InstanceCreateInfo create_info,
+                        double_ptr<Instance> pp_instance) {
   VkInstanceCreateInfo instance_create_info{};
   VkDebugUtilsMessengerCreateInfoEXT debug_create_info{};
 
-  if (create_info_.enable_validation_layers) {
+  auto validation_layers = GetValidationLayers();
+  if (create_info.enable_validation_layers) {
     if (!CheckValidationLayerSupport()) {
-      ThrowError("[Vulkan] validation layer is required, but not supported.");
+      SetErrorMessage("validation layer is required, but not supported.");
+      return VK_ERROR_UNKNOWN;
     }
-    create_info_.extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-    auto validation_layers = GetValidationLayers();
+    create_info.AddExtension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     instance_create_info.enabledLayerCount =
         static_cast<uint32_t>(validation_layers.size());
     instance_create_info.ppEnabledLayerNames = validation_layers.data();
@@ -78,42 +98,51 @@ Instance::Instance(grassland::vulkan::InstanceCreateInfo create_info)
   }
 
 #ifdef __APPLE__
-  create_info_.AddExtension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+  create_info.AddExtension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 #endif
 
   instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-  instance_create_info.pApplicationInfo = &create_info_.app_info;
+  instance_create_info.pApplicationInfo = &create_info.app_info;
   instance_create_info.enabledExtensionCount =
-      static_cast<uint32_t>(create_info_.extensions.size());
-  instance_create_info.ppEnabledExtensionNames = create_info_.extensions.data();
+      static_cast<uint32_t>(create_info.extensions.size());
+  instance_create_info.ppEnabledExtensionNames = create_info.extensions.data();
 
 #ifdef __APPLE__
   instance_create_info.flags |=
       VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 #endif
 
-  if (vkCreateInstance(&instance_create_info, nullptr, &instance_) !=
-      VK_SUCCESS) {
-    ThrowError("[Vulkan] failed to create instance.");
+  VkInstance instance{nullptr};
+  VkDebugUtilsMessengerEXT debug_messenger{nullptr};
+  InstanceProcedures instance_procedures;
+
+  RETURN_IF_FAILED_VK(
+      vkCreateInstance(&instance_create_info, nullptr, &instance),
+      "failed to create instance.");
+
+  instance_procedures.Initialize(instance,
+                                 create_info.enable_validation_layers);
+
+  if (create_info.enable_validation_layers) {
+    RETURN_IF_FAILED_VK(
+        instance_procedures.vkCreateDebugUtilsMessengerEXT(
+            instance, &debug_create_info, nullptr, &debug_messenger),
+        "failed to set up debug messenger.");
   }
 
-  instance_procedures_.Initialize(instance_,
-                                  create_info_.enable_validation_layers);
-
-  if (create_info_.enable_validation_layers) {
-    ThrowIfFailed(
-        instance_procedures_.vkCreateDebugUtilsMessengerEXT(
-            instance_, &debug_create_info, nullptr, &debug_messenger_),
-        "[Vulkan] failed to set up debug messenger.");
-  }
-}
-
-Instance::~Instance() {
-  if (create_info_.enable_validation_layers) {
-    instance_procedures_.vkDestroyDebugUtilsMessengerEXT(
-        instance_, debug_messenger_, nullptr);
+  if (pp_instance) {
+    pp_instance.set(create_info, instance, debug_messenger,
+                    instance_procedures);
+  } else {
+    if (create_info.enable_validation_layers) {
+      instance_procedures.vkDestroyDebugUtilsMessengerEXT(
+          instance, debug_messenger, nullptr);
+    }
+    vkDestroyInstance(instance, nullptr);
+    SetErrorMessage("pp_instance is nullptr.");
+    return VK_ERROR_UNKNOWN;
   }
 
-  vkDestroyInstance(instance_, nullptr);
+  return VK_SUCCESS;
 }
 }  // namespace grassland::vulkan

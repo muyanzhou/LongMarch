@@ -273,7 +273,6 @@ std::string VkPresentModeToName(VkPresentModeKHR present_mode) {
 }
 
 void ThrowError(const std::string &message) {
-  std::cerr << message << std::endl;
   throw std::runtime_error(message);
 }
 
@@ -284,6 +283,20 @@ void ThrowIfFailed(VkResult result, const std::string &message) {
 }
 
 void Warning(const std::string &message) {
-  std::cerr << message << std::endl;
+  LogWarning("[Vulkan] " + message);
 }
+
+namespace {
+std::string error_message;
+}
+
+void SetErrorMessage(const std::string &message) {
+  LogError("[Vulkan] " + message);
+  error_message = message;
+}
+
+std::string GetErrorMessage() {
+  return error_message;
+}
+
 }  // namespace grassland::vulkan

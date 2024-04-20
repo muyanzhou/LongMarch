@@ -24,7 +24,10 @@ struct InstanceCreateInfo {
 
 class Instance {
  public:
-  explicit Instance(InstanceCreateInfo create_info = InstanceCreateInfo(false));
+  Instance(InstanceCreateInfo create_info,
+           VkInstance instance,
+           VkDebugUtilsMessengerEXT debug_messenger,
+           InstanceProcedures instance_procedures);
 
   ~Instance();
 
@@ -43,4 +46,9 @@ class Instance {
   VkDebugUtilsMessengerEXT debug_messenger_{};
   InstanceProcedures instance_procedures_{};
 };
+
+VkResult CreateInstance(
+    InstanceCreateInfo create_info,
+    double_ptr<Instance> pp_instance = static_cast<Instance **>(nullptr));
+
 }  // namespace grassland::vulkan

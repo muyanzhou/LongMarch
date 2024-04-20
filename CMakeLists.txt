@@ -16,6 +16,10 @@ find_package(fmt CONFIG REQUIRED)
 set(FMT_LIB_NAME fmt::fmt-header-only) # fmt::fmt is also available
 list(APPEND LIB_LIST ${FMT_LIB_NAME})
 
+find_package(spdlog CONFIG REQUIRED)
+set(SPDLOG_LIB_NAME spdlog::spdlog_header_only) # spdlog::spdlog is also available
+list(APPEND LIB_LIST ${SPDLOG_LIB_NAME})
+
 find_package(Eigen3 CONFIG REQUIRED)
 set(EIGEN3_LIB_NAME Eigen3::Eigen)
 list(APPEND LIB_LIST ${EIGEN3_LIB_NAME})

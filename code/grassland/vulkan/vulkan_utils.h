@@ -1,10 +1,13 @@
 #pragma once
+
 #include <GLFW/glfw3.h>
 #include <fmt/core.h>
 #include <vulkan/vulkan.h>
 
 #include <string>
 #include <vector>
+
+#include "grassland/utils/utils.h"
 
 namespace grassland::vulkan {
 #define GRASSLAND_VULKAN_PROCEDURE_VAR(function_name) \
@@ -19,7 +22,9 @@ constexpr bool kDefaultEnableValidationLayers = true;
 std::string PCIVendorIDToName(uint32_t vendor_id);
 
 std::string VkFormatToName(VkFormat format);
+
 std::string VkColorSpaceToName(VkColorSpaceKHR color_space);
+
 std::string VkPresentModeToName(VkPresentModeKHR present_mode);
 
 void ThrowError(const std::string &message);
@@ -44,4 +49,24 @@ template <class... Args>
 void Warning(const std::string &message, Args &&...args) {
   Warning(fmt::format(message, std::forward<Args>(args)...));
 }
+
+void SetErrorMessage(const std::string &message);
+
+template <class... Args>
+void SetErrorMessage(const std::string &message, Args &&...args) {
+  SetErrorMessage(fmt::format(message, std::forward<Args>(args)...));
+}
+
+std::string GetErrorMessage();
+
+#define RETURN_IF_FAILED_VK(cmd, ...) \
+  do {                                \
+    VkResult res = cmd;               \
+    if (res != VK_SUCCESS) {          \
+      SetErrorMessage(__VA_ARGS__);   \
+      return res;                     \
+    }                                 \
+                                      \
+  } while (false)
+
 }  // namespace grassland::vulkan
