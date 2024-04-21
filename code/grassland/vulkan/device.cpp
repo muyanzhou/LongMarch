@@ -2,6 +2,8 @@
 
 #include <utility>
 
+#include "grassland/vulkan/swap_chain.h"
+
 namespace grassland::vulkan {
 Device::Device(const class Instance *instance,
                const class PhysicalDevice &physical_device,
@@ -22,5 +24,82 @@ Device::Device(const class Instance *instance,
 Device::~Device() {
   //        vmaDestroyAllocator(allocator_);
   vkDestroyDevice(device_, nullptr);
+}
+
+VkResult Device::CreateSwapchain(const Surface *surface,
+                                 double_ptr<Swapchain> pp_swapchain) const {
+  if (!pp_swapchain) {
+    SetErrorMessage("pp_swapchain is nullptr");
+    return VK_ERROR_INITIALIZATION_FAILED;
+  }
+  SwapChainSupportDetails swapChainSupport = Swapchain::QuerySwapChainSupport(
+      PhysicalDevice().Handle(), surface->Handle());
+
+  // List all available surface formats, print both VkFormat and VkColorSpace
+  spdlog::info("Available surface formats:");
+  for (const auto &format : swapChainSupport.formats) {
+    spdlog::info("  Format: {}, Color space: {}", VkFormatToName(format.format),
+                 VkColorSpaceToName(format.colorSpace));
+  }
+
+  VkSurfaceFormatKHR surfaceFormat =
+      Swapchain::ChooseSwapSurfaceFormat(swapChainSupport.formats);
+  VkPresentModeKHR presentMode =
+      Swapchain::ChooseSwapPresentMode(swapChainSupport.presentModes);
+  VkExtent2D extent = Swapchain::ChooseSwapExtent(swapChainSupport.capabilities,
+                                                  surface->Window());
+
+  spdlog::info("Swap chain extent: {}x{}", extent.width, extent.height);
+  spdlog::info("Swap chain format: {}", VkFormatToName(surfaceFormat.format));
+  spdlog::info("Swap chain color space: {}",
+               VkColorSpaceToName(surfaceFormat.colorSpace));
+  spdlog::info("Swap chain present mode: {}", VkPresentModeToName(presentMode));
+
+  // Print selected surface format and present mode
+
+  uint32_t image_count = swapChainSupport.capabilities.minImageCount + 1;
+  if (swapChainSupport.capabilities.maxImageCount > 0 &&
+      image_count > swapChainSupport.capabilities.maxImageCount) {
+    image_count = swapChainSupport.capabilities.maxImageCount;
+  }
+  VkSwapchainCreateInfoKHR createInfo{};
+  createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+  createInfo.surface = surface->Handle();
+  createInfo.minImageCount = image_count;
+  createInfo.imageFormat = surfaceFormat.format;
+  createInfo.imageColorSpace = surfaceFormat.colorSpace;
+  createInfo.imageExtent = extent;
+  createInfo.imageArrayLayers = 1;
+  createInfo.imageUsage =
+      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+  uint32_t queueFamilyIndices[] = {
+      PhysicalDevice().GraphicsFamilyIndex(),
+      PhysicalDevice().PresentFamilyIndex(surface)};
+
+  if (queueFamilyIndices[0] != queueFamilyIndices[1]) {
+    createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+    createInfo.queueFamilyIndexCount = 2;
+    createInfo.pQueueFamilyIndices = queueFamilyIndices;
+  } else {
+    createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    createInfo.queueFamilyIndexCount = 0;      // Optional
+    createInfo.pQueueFamilyIndices = nullptr;  // Optional
+  }
+
+  createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
+  createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+  createInfo.presentMode = presentMode;
+  createInfo.clipped = VK_TRUE;
+  createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+  VkSwapchainKHR swapchain;
+  RETURN_IF_FAILED_VK(
+      vkCreateSwapchainKHR(device_, &createInfo, nullptr, &swapchain),
+      "failed to create swap chain!");
+
+  pp_swapchain.construct(this, surface, swapchain, surfaceFormat.format,
+                         extent);
+
+  return VK_SUCCESS;
 }
 }  // namespace grassland::vulkan

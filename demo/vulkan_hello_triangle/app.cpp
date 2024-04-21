@@ -44,6 +44,11 @@ void Application::OnInit() {
   if (result != VK_SUCCESS) {
     throw std::runtime_error("Failed to create Vulkan device");
   }
+
+  result = device_->CreateSwapchain(surface_.get(), &swapchain_);
+  if (result != VK_SUCCESS) {
+    throw std::runtime_error("Failed to create Vulkan swapchain");
+  }
 }
 
 void Application::OnUpdate() {
@@ -53,6 +58,7 @@ void Application::OnRender() {
 }
 
 void Application::OnShutdown() {
+  swapchain_.reset();
   device_.reset();
   surface_.reset();
   instance_.reset();

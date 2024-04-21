@@ -16,7 +16,7 @@ class Queue {
     return queue_family_index_;
   }
 
-  VkResult WaitIdle() const;
+  [[nodiscard]] VkResult WaitIdle() const;
 
  private:
   class Device *device_{};

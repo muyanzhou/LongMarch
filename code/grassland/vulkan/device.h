@@ -48,6 +48,9 @@ class Device {
     return vkDeviceWaitIdle(device_);
   }
 
+  VkResult CreateSwapchain(const Surface *surface,
+                           double_ptr<Swapchain> pp_swapchain) const;
+
  private:
   const class Instance *instance_{};
   class PhysicalDevice physical_device_;

@@ -44,7 +44,7 @@ class PhysicalDevice {
 
   [[nodiscard]] uint32_t GraphicsFamilyIndex() const;
 
-  [[nodiscard]] uint32_t PresentFamilyIndex(Surface *surface) const;
+  [[nodiscard]] uint32_t PresentFamilyIndex(const Surface *surface) const;
 
   [[nodiscard]] uint32_t ComputeFamilyIndex() const;
 

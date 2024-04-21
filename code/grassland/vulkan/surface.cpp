@@ -3,7 +3,7 @@
 #include "grassland/vulkan/instance.h"
 
 namespace grassland::vulkan {
-Surface::Surface(const Instance *instance,
+Surface::Surface(const class Instance *instance,
                  GLFWwindow *window,
                  VkSurfaceKHR surface)
     : instance_(instance), window_(window), surface_(surface) {
@@ -15,5 +15,13 @@ Surface::~Surface() {
 
 [[nodiscard]] VkSurfaceKHR Surface::Handle() const {
   return surface_;
+}
+
+GLFWwindow *Surface::Window() const {
+  return window_;
+}
+
+const Instance *Surface::Instance() const {
+  return instance_;
 }
 }  // namespace grassland::vulkan

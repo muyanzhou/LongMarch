@@ -156,8 +156,7 @@ uint32_t PhysicalDevice::GraphicsFamilyIndex() const {
   return -1;
 }
 
-uint32_t PhysicalDevice::PresentFamilyIndex(
-    grassland::vulkan::Surface *surface) const {
+uint32_t PhysicalDevice::PresentFamilyIndex(const Surface *surface) const {
   uint32_t present_family_index = 0;
   std::vector<VkQueueFamilyProperties> queue_families =
       GetQueueFamilyProperties();
