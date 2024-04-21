@@ -2,32 +2,34 @@
 
 #include <utility>
 
+#include "grassland/vulkan/device.h"
+#include "grassland/vulkan/physical_device.h"
 #include "grassland/vulkan/surface.h"
 #include "grassland/vulkan/validation_layer.h"
 
 namespace grassland::vulkan {
-InstanceCreateInfo::InstanceCreateInfo(bool surface_support) {
+InstanceCreateHint::InstanceCreateHint(bool surface_support) {
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
   app_info.pApplicationName = "Grassland";
   app_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
   app_info.pEngineName = "Grassland";
   app_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-  app_info.apiVersion = VK_API_VERSION_1_0;
+  app_info.apiVersion = VK_API_VERSION_1_2;
 
   if (surface_support) {
     ApplyGLFWSurfaceSupport();
   }
 }
 
-void InstanceCreateInfo::SetValidationLayersEnabled(bool enabled) {
+void InstanceCreateHint::SetValidationLayersEnabled(bool enabled) {
   enable_validation_layers = enabled;
 }
 
-void InstanceCreateInfo::AddExtension(const char *extension) {
+void InstanceCreateHint::AddExtension(const char *extension) {
   extensions.push_back(extension);
 }
 
-void InstanceCreateInfo::ApplyGLFWSurfaceSupport() {
+void InstanceCreateHint::ApplyGLFWSurfaceSupport() {
   uint32_t glfw_extension_count = 0;
   const char **glfw_extensions;
   glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
@@ -46,18 +48,18 @@ void InstanceCreateInfo::ApplyGLFWSurfaceSupport() {
   glfw_surface_support = true;
 }
 
-VkResult CreateInstance(InstanceCreateInfo create_info,
+VkResult CreateInstance(InstanceCreateHint create_hint,
                         double_ptr<Instance> pp_instance) {
   VkInstanceCreateInfo instance_create_info{};
   VkDebugUtilsMessengerCreateInfoEXT debug_create_info{};
 
   auto validation_layers = GetValidationLayers();
-  if (create_info.enable_validation_layers) {
+  if (create_hint.enable_validation_layers) {
     if (!CheckValidationLayerSupport()) {
       SetErrorMessage("validation layer is required, but not supported.");
       return VK_ERROR_UNKNOWN;
     }
-    create_info.AddExtension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    create_hint.AddExtension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     instance_create_info.enabledLayerCount =
         static_cast<uint32_t>(validation_layers.size());
     instance_create_info.ppEnabledLayerNames = validation_layers.data();
@@ -85,10 +87,10 @@ VkResult CreateInstance(InstanceCreateInfo create_info,
 #endif
 
   instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-  instance_create_info.pApplicationInfo = &create_info.app_info;
+  instance_create_info.pApplicationInfo = &create_hint.app_info;
   instance_create_info.enabledExtensionCount =
-      static_cast<uint32_t>(create_info.extensions.size());
-  instance_create_info.ppEnabledExtensionNames = create_info.extensions.data();
+      static_cast<uint32_t>(create_hint.extensions.size());
+  instance_create_info.ppEnabledExtensionNames = create_hint.extensions.data();
 
 #ifdef __APPLE__
   instance_create_info.flags |=
@@ -104,20 +106,20 @@ VkResult CreateInstance(InstanceCreateInfo create_info,
       "failed to create instance.");
 
   instance_procedures.Initialize(instance,
-                                 create_info.enable_validation_layers);
+                                 create_hint.enable_validation_layers);
 
-  if (create_info.enable_validation_layers) {
+  if (create_hint.enable_validation_layers) {
     RETURN_IF_FAILED_VK(
         instance_procedures.vkCreateDebugUtilsMessengerEXT(
             instance, &debug_create_info, nullptr, &debug_messenger),
-        "failed to set up debug messenger.");
+        "failed to construct up debug messenger.");
   }
 
   if (pp_instance) {
-    pp_instance.set(create_info, instance, debug_messenger,
-                    instance_procedures);
+    pp_instance.construct(create_hint, instance, debug_messenger,
+                          instance_procedures);
   } else {
-    if (create_info.enable_validation_layers) {
+    if (create_hint.enable_validation_layers) {
       instance_procedures.vkDestroyDebugUtilsMessengerEXT(
           instance, debug_messenger, nullptr);
     }
@@ -129,18 +131,18 @@ VkResult CreateInstance(InstanceCreateInfo create_info,
   return VK_SUCCESS;
 }
 
-Instance::Instance(InstanceCreateInfo create_info,
+Instance::Instance(InstanceCreateHint create_hint,
                    VkInstance instance,
                    VkDebugUtilsMessengerEXT debug_messenger,
                    InstanceProcedures instance_procedures)
-    : create_info_(std::move(create_info)),
+    : create_hint_(std::move(create_hint)),
       instance_(instance),
       debug_messenger_(debug_messenger),
       instance_procedures_(instance_procedures) {
 }
 
 Instance::~Instance() {
-  if (create_info_.enable_validation_layers) {
+  if (create_hint_.enable_validation_layers) {
     instance_procedures_.vkDestroyDebugUtilsMessengerEXT(
         instance_, debug_messenger_, nullptr);
   }
@@ -151,7 +153,7 @@ Instance::~Instance() {
 VkResult Instance::CreateSurfaceFromGLFWWindow(
     GLFWwindow *window,
     double_ptr<Surface> pp_surface) const {
-  if (!create_info_.glfw_surface_support) {
+  if (!create_hint_.glfw_surface_support) {
     Warning("GLFW surface support is not enabled.");
   }
 
@@ -164,7 +166,7 @@ VkResult Instance::CreateSurfaceFromGLFWWindow(
   }
 
   if (pp_surface) {
-    pp_surface.set(this, window, surface);
+    pp_surface.construct(this, window, surface);
   } else {
     vkDestroySurfaceKHR(instance_, surface, nullptr);
     SetErrorMessage("pp_surface is nullptr.");
@@ -172,6 +174,112 @@ VkResult Instance::CreateSurfaceFromGLFWWindow(
   }
 
   return VK_SUCCESS;
+}
+
+std::vector<PhysicalDevice> Instance::EnumeratePhysicalDevices() const {
+  uint32_t device_count = 0;
+  vkEnumeratePhysicalDevices(instance_, &device_count, nullptr);
+  std::vector<VkPhysicalDevice> devices(device_count);
+  vkEnumeratePhysicalDevices(instance_, &device_count, devices.data());
+
+  std::vector<PhysicalDevice> physical_devices;
+  physical_devices.reserve(devices.size());
+  for (const auto &device : devices) {
+    physical_devices.emplace_back(device);
+  }
+
+  return physical_devices;
+}
+
+VkResult Instance::CreateDevice(Surface *surface,
+                                bool enable_raytracing_extension,
+                                int device_index,
+                                double_ptr<struct Device> pp_device) const {
+  DeviceFeatureRequirement device_feature_requirement{};
+  device_feature_requirement.surface = surface;
+  device_feature_requirement.enable_raytracing_extension =
+      enable_raytracing_extension;
+  return CreateDevice(device_feature_requirement, device_index, pp_device);
+}
+
+VkResult Instance::CreateDevice(
+    const struct DeviceFeatureRequirement &device_feature_requirement,
+    int device_index,
+    double_ptr<struct Device> pp_device) const {
+  std::vector<PhysicalDevice> physical_devices = EnumeratePhysicalDevices();
+
+  if (device_index < 0) {
+    uint64_t max_score = 0;
+    for (int i = 0; i < physical_devices.size(); i++) {
+      if (!physical_devices[i].CheckFeatureSupport(
+              device_feature_requirement)) {
+        continue;
+      }
+
+      uint64_t score = physical_devices[i].Evaluate();
+      if (device_index < 0 || score > max_score) {
+        max_score = score;
+        device_index = i;
+      }
+    }
+  }
+
+  if (device_index < 0 || device_index >= physical_devices.size()) {
+    SetErrorMessage("no suitable physical device found.");
+    return VK_ERROR_UNKNOWN;
+  }
+
+  PhysicalDevice physical_device = physical_devices[device_index];
+
+  VkResult result = CreateDevice(
+      physical_device, device_feature_requirement,
+      device_feature_requirement.GenerateRecommendedDeviceCreateInfo(
+          physical_device),
+      pp_device);
+  if (result == VK_SUCCESS) {
+    if (device_feature_requirement.enable_raytracing_extension) {
+      pp_device->Procedures().GetRayTracingProcedures(pp_device->Handle());
+    }
+  }
+
+  return result;
+}
+
+VkResult Instance::CreateDevice(
+    const PhysicalDevice &physical_device,
+    const DeviceFeatureRequirement &device_feature_requirement,
+    DeviceCreateInfo create_info,
+    double_ptr<Device> pp_device) const {
+  VkDeviceCreateInfo device_create_info = create_info.CompileVkDeviceCreateInfo(
+      create_hint_.enable_validation_layers, physical_device);
+
+  VkDevice device{nullptr};
+
+  RETURN_IF_FAILED_VK(vkCreateDevice(physical_device.Handle(),
+                                     &device_create_info, nullptr, &device),
+                      "failed to create logical device.");
+
+  if (pp_device) {
+    pp_device.construct(this, physical_device, create_info, device);
+  } else {
+    vkDestroyDevice(device, nullptr);
+    SetErrorMessage("pp_device is nullptr.");
+    return VK_ERROR_UNKNOWN;
+  }
+
+  return VK_SUCCESS;
+}
+
+VkResult Instance::CreateDevice(Surface *surface,
+                                bool enable_raytracing_extension,
+                                double_ptr<struct Device> pp_device) const {
+  return CreateDevice(surface, enable_raytracing_extension, -1, pp_device);
+}
+
+VkResult Instance::CreateDevice(
+    const DeviceFeatureRequirement &device_feature_requirement,
+    double_ptr<struct Device> pp_device) const {
+  return CreateDevice(device_feature_requirement, -1, pp_device);
 }
 
 }  // namespace grassland::vulkan

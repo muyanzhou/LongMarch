@@ -1,5 +1,6 @@
 #include "grassland/vulkan/physical_device.h"
 
+#include "grassland/vulkan/device.h"
 #include "grassland/vulkan/surface.h"
 
 namespace grassland::vulkan {
@@ -172,6 +173,32 @@ uint32_t PhysicalDevice::PresentFamilyIndex(
   return -1;
 }
 
+uint32_t PhysicalDevice::ComputeFamilyIndex() const {
+  uint32_t compute_family_index = 0;
+  std::vector<VkQueueFamilyProperties> queue_families =
+      GetQueueFamilyProperties();
+  for (const auto &queue_family : queue_families) {
+    if (queue_family.queueFlags & VK_QUEUE_COMPUTE_BIT) {
+      return compute_family_index;
+    }
+    compute_family_index++;
+  }
+  return -1;
+}
+
+uint32_t PhysicalDevice::TransferFamilyIndex() const {
+  uint32_t transfer_family_index = 0;
+  std::vector<VkQueueFamilyProperties> queue_families =
+      GetQueueFamilyProperties();
+  for (const auto &queue_family : queue_families) {
+    if (queue_family.queueFlags & VK_QUEUE_TRANSFER_BIT) {
+      return transfer_family_index;
+    }
+    transfer_family_index++;
+  }
+  return -1;
+}
+
 VkSampleCountFlagBits PhysicalDevice::GetMaxUsableSampleCount() const {
   VkPhysicalDeviceProperties physical_device_properties =
       GetPhysicalDeviceProperties();
@@ -198,6 +225,41 @@ VkSampleCountFlagBits PhysicalDevice::GetMaxUsableSampleCount() const {
     return VK_SAMPLE_COUNT_2_BIT;
   }
   return VK_SAMPLE_COUNT_1_BIT;
+}
+
+bool PhysicalDevice::CheckFeatureSupport(
+    const DeviceFeatureRequirement &feature_requirement) const {
+  if (feature_requirement.num_graphics_queue) {
+    if (GraphicsFamilyIndex() == -1) {
+      return false;
+    }
+  }
+
+  if (feature_requirement.num_compute_queue) {
+    if (ComputeFamilyIndex() == -1) {
+      return false;
+    }
+  }
+
+  if (feature_requirement.num_transfer_queue) {
+    if (TransferFamilyIndex() == -1) {
+      return false;
+    }
+  }
+
+  if (feature_requirement.enable_raytracing_extension) {
+    if (!SupportRayTracing()) {
+      return false;
+    }
+  }
+
+  if (feature_requirement.surface) {
+    if (PresentFamilyIndex(feature_requirement.surface) == -1) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 }  // namespace grassland::vulkan

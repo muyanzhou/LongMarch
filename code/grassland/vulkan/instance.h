@@ -6,7 +6,7 @@
 
 namespace grassland::vulkan {
 
-struct InstanceCreateInfo {
+struct InstanceCreateHint {
   bool enable_validation_layers{kDefaultEnableValidationLayers};
 
   std::vector<const char *> extensions{};
@@ -15,7 +15,7 @@ struct InstanceCreateInfo {
 
   bool glfw_surface_support{false};
 
-  explicit InstanceCreateInfo(bool surface_support = true);
+  explicit InstanceCreateHint(bool surface_support = true);
 
   void SetValidationLayersEnabled(
       bool enabled = kDefaultEnableValidationLayers);
@@ -27,26 +27,57 @@ struct InstanceCreateInfo {
 
 class Instance {
  public:
-  Instance(InstanceCreateInfo create_info,
+  Instance(InstanceCreateHint create_hint,
            VkInstance instance,
            VkDebugUtilsMessengerEXT debug_messenger,
            InstanceProcedures instance_procedures);
 
   ~Instance();
 
+  operator VkInstance() const {
+    return instance_;
+  }
+
   [[nodiscard]] VkInstance Handle() const {
     return instance_;
   }
 
-  [[nodiscard]] const InstanceCreateInfo &Settings() const {
-    return create_info_;
+  [[nodiscard]] const InstanceCreateHint &CreateHint() const {
+    return create_hint_;
   }
 
   VkResult CreateSurfaceFromGLFWWindow(GLFWwindow *window,
                                        double_ptr<Surface> pp_surface) const;
 
+  [[nodiscard]] std::vector<class PhysicalDevice> EnumeratePhysicalDevices()
+      const;
+
+  [[nodiscard]] VkResult CreateDevice(
+      const PhysicalDevice &physical_device,
+      const struct DeviceFeatureRequirement &device_feature_requirement,
+      struct DeviceCreateInfo create_info,
+      double_ptr<struct Device> pp_device) const;
+
+  VkResult CreateDevice(Surface *surface,
+                        bool enable_raytracing_extension,
+                        int device_index,
+                        double_ptr<struct Device> pp_device) const;
+
+  [[nodiscard]] VkResult CreateDevice(
+      const struct DeviceFeatureRequirement &device_feature_requirement,
+      int device_index,
+      double_ptr<struct Device> pp_device) const;
+
+  VkResult CreateDevice(Surface *surface,
+                        bool enable_raytracing_extension,
+                        double_ptr<struct Device> pp_device) const;
+
+  [[nodiscard]] VkResult CreateDevice(
+      const struct DeviceFeatureRequirement &device_feature_requirement,
+      double_ptr<struct Device> pp_device) const;
+
  private:
-  InstanceCreateInfo create_info_;
+  InstanceCreateHint create_hint_;
 
   VkInstance instance_{};
   VkDebugUtilsMessengerEXT debug_messenger_{};
@@ -54,7 +85,7 @@ class Instance {
 };
 
 VkResult CreateInstance(
-    InstanceCreateInfo create_info,
+    InstanceCreateHint create_hint,
     double_ptr<Instance> pp_instance = static_cast<Instance **>(nullptr));
 
 }  // namespace grassland::vulkan

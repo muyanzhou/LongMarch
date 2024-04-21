@@ -22,4 +22,5 @@ class Application {
 
   std::shared_ptr<long_march::vulkan::Instance> instance_;
   std::shared_ptr<long_march::vulkan::Surface> surface_;
+  std::shared_ptr<long_march::vulkan::Device> device_;
 };

@@ -30,7 +30,7 @@ void Application::Run() {
 void Application::OnInit() {
   VkResult result;
   result = long_march::vulkan::CreateInstance(
-      long_march::vulkan::InstanceCreateInfo{true}, &instance_);
+      long_march::vulkan::InstanceCreateHint{true}, &instance_);
   if (result != VK_SUCCESS) {
     throw std::runtime_error("Failed to create Vulkan instance");
   }
@@ -38,6 +38,11 @@ void Application::OnInit() {
   result = instance_->CreateSurfaceFromGLFWWindow(window_, &surface_);
   if (result != VK_SUCCESS) {
     throw std::runtime_error("Failed to create Vulkan surface");
+  }
+
+  result = instance_->CreateDevice(surface_.get(), true, &device_);
+  if (result != VK_SUCCESS) {
+    throw std::runtime_error("Failed to create Vulkan device");
   }
 }
 
@@ -48,6 +53,7 @@ void Application::OnRender() {
 }
 
 void Application::OnShutdown() {
+  device_.reset();
   surface_.reset();
   instance_.reset();
 }

@@ -3,6 +3,9 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <fmt/core.h>
+#define VMA_VULKAN_VERSION 1002000  // Specify using Vulkan 1.2
+#include <vk_mem_alloc.h>
+#include <vulkan/vulkan.h>
 
 #include <string>
 #include <vector>
@@ -68,5 +71,27 @@ std::string GetErrorMessage();
     }                                 \
                                       \
   } while (false)
+
+class Instance;
+class Surface;
+class PhysicalDevice;
+class Device;
+class Queue;
+class Swapchain;
+class CommandPool;
+class CommandBuffer;
+class DescriptorPool;
+class DescriptorSetLayout;
+class DescriptorSet;
+class PipelineLayout;
+class Pipeline;
+class RenderPass;
+class Framebuffer;
+class ShaderModule;
+class Fence;
+class Semaphore;
+class Buffer;
+class Image;
+class Sampler;
 
 }  // namespace grassland::vulkan

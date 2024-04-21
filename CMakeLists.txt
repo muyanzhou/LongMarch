@@ -32,6 +32,15 @@ find_package(Vulkan REQUIRED)
 set(VULKAN_LIB_NAME ${Vulkan_LIBRARIES})
 list(APPEND LIB_LIST ${VULKAN_LIB_NAME})
 
+find_package(VulkanMemoryAllocator CONFIG REQUIRED)
+set(VMA_LIB_NAME Vulkan::Headers GPUOpen::VulkanMemoryAllocator)
+list(APPEND LIB_LIST ${VMA_LIB_NAME})
+
+find_package(glslang CONFIG REQUIRED)
+set(GLSLANG_LIB_NAME glslang::OSDependent glslang::glslang glslang::MachineIndependent glslang::GenericCodeGen glslang::glslang-default-resource-limits glslang::OGLCompiler glslang::SPVRemapper glslang::SPIRV glslang::HLSL)
+list(APPEND LIB_LIST ${GLSLANG_LIB_NAME})
+
+
 add_subdirectory(code)
 
 add_subdirectory(demo)

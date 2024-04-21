@@ -6,6 +6,8 @@
     "eigen3",
     "glfw3",
     "fmt",
-    "spdlog"
+    "spdlog",
+    "vulkan-memory-allocator",
+    "glslang"
   ]
 }

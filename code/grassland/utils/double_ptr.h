@@ -45,7 +45,7 @@ class double_ptr {
   }
 
   template <class... Args>
-  ContentType *set(Args &&...args) {
+  ContentType *construct(Args &&...args) {
     switch (type) {
       case double_ptr_type::raw:
         *raw_ptr = new ContentType(std::forward<Args>(args)...);
@@ -62,7 +62,7 @@ class double_ptr {
     return operator ContentType *();
   }
 
-  operator ContentType *() {
+  explicit operator ContentType *() {
     switch (type) {
       case double_ptr_type::raw:
         return *raw_ptr;
@@ -72,6 +72,14 @@ class double_ptr {
         return unique_ptr->get();
     }
     return nullptr;
+  }
+
+  ContentType *operator->() {
+    return operator ContentType *();
+  }
+
+  ContentType *operator*() {
+    return operator ContentType *();
   }
 
   operator bool() {

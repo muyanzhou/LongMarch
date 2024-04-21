@@ -2,7 +2,6 @@
 #include "grassland/vulkan/vulkan_utils.h"
 
 namespace grassland::vulkan {
-class Instance;
 class Surface {
  public:
   Surface(const Instance *instance, GLFWwindow *window, VkSurfaceKHR surface);
