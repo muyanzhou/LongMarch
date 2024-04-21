@@ -4,6 +4,9 @@
 
 #include "fmt/core.h"
 
+#define VMA_IMPLEMENTATION
+#include <vk_mem_alloc.h>
+
 namespace grassland::vulkan {
 std::string PCIVendorIDToName(uint32_t vendor_id) {
   switch (vendor_id) {

@@ -7,7 +7,6 @@
     "glfw3",
     "fmt",
     "spdlog",
-    "vulkan-memory-allocator",
-    "glslang"
+    "vulkan-memory-allocator"
   ]
 }
