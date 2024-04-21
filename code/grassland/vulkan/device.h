@@ -52,11 +52,27 @@ class Device {
                     int queue_index,
                     double_ptr<Queue> pp_queue) const;
 
-  VkResult CreateSwapchain(const Surface *surface,
-                           double_ptr<Swapchain> pp_swapchain) const;
+  [[nodiscard]] VkResult CreateSwapchain(
+      const Surface *surface,
+      double_ptr<Swapchain> pp_swapchain) const;
+
+  [[nodiscard]] VkResult CreateSemaphore(
+      double_ptr<Semaphore> pp_semaphore) const;
+
+  [[nodiscard]] VkResult CreateFence(bool signaled,
+                                     double_ptr<Fence> pp_fence) const;
+
+  [[nodiscard]] VkResult CreateCommandPool(
+      uint32_t queue_family_index,
+      VkCommandPoolCreateFlags flags,
+      double_ptr<CommandPool> pp_command_pool) const;
+
+  [[nodiscard]] VkResult CreateCommandPool(
+      double_ptr<CommandPool> pp_command_pool) const;
 
  private:
   const class Instance *instance_{};
+
   class PhysicalDevice physical_device_;
 
   const DeviceCreateInfo create_info_;

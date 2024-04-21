@@ -2,7 +2,10 @@
 
 #include <utility>
 
+#include "grassland/vulkan/command_pool.h"
+#include "grassland/vulkan/fence.h"
 #include "grassland/vulkan/queue.h"
+#include "grassland/vulkan/semaphore.h"
 #include "grassland/vulkan/swap_chain.h"
 
 namespace grassland::vulkan {
@@ -137,5 +140,80 @@ VkResult Device::GetQueue(uint32_t queue_family_index,
   pp_queue.construct(this, queue_family_index, queue);
 
   return VK_SUCCESS;
+}
+
+VkResult Device::CreateSemaphore(double_ptr<Semaphore> pp_semaphore) const {
+  if (!pp_semaphore) {
+    SetErrorMessage("pp_semaphore is nullptr");
+    return VK_ERROR_INITIALIZATION_FAILED;
+  }
+
+  VkSemaphore semaphore;
+  VkSemaphoreCreateInfo semaphore_create_info{};
+
+  semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+  semaphore_create_info.pNext = nullptr;
+  semaphore_create_info.flags = 0;
+
+  RETURN_IF_FAILED_VK(
+      vkCreateSemaphore(device_, &semaphore_create_info, nullptr, &semaphore),
+      "failed to create semaphore!");
+
+  pp_semaphore.construct(this, semaphore);
+
+  return VK_SUCCESS;
+}
+
+VkResult Device::CreateFence(bool signaled, double_ptr<Fence> pp_fence) const {
+  if (!pp_fence) {
+    SetErrorMessage("pp_fence is nullptr");
+    return VK_ERROR_INITIALIZATION_FAILED;
+  }
+
+  VkFence fence;
+  VkFenceCreateInfo fence_create_info{};
+
+  fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fence_create_info.pNext = nullptr;
+  fence_create_info.flags = signaled ? VK_FENCE_CREATE_SIGNALED_BIT : 0;
+
+  RETURN_IF_FAILED_VK(
+      vkCreateFence(device_, &fence_create_info, nullptr, &fence),
+      "failed to create fence!");
+
+  pp_fence.construct(this, fence);
+
+  return VK_SUCCESS;
+}
+
+VkResult Device::CreateCommandPool(
+    uint32_t queue_family_index,
+    VkCommandPoolCreateFlags flags,
+    double_ptr<CommandPool> pp_command_pool) const {
+  if (!pp_command_pool) {
+    SetErrorMessage("pp_command_pool is nullptr");
+    return VK_ERROR_INITIALIZATION_FAILED;
+  }
+
+  VkCommandPool command_pool;
+  VkCommandPoolCreateInfo command_pool_create_info = {};
+  command_pool_create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  command_pool_create_info.queueFamilyIndex = queue_family_index;
+  command_pool_create_info.flags = flags;
+
+  RETURN_IF_FAILED_VK(vkCreateCommandPool(device_, &command_pool_create_info,
+                                          nullptr, &command_pool),
+                      "failed to create command pool!");
+
+  pp_command_pool.construct(this, command_pool);
+
+  return VK_SUCCESS;
+}
+
+VkResult Device::CreateCommandPool(
+    double_ptr<CommandPool> pp_command_pool) const {
+  return CreateCommandPool(physical_device_.GraphicsFamilyIndex(),
+                           VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+                           pp_command_pool);
 }
 }  // namespace grassland::vulkan

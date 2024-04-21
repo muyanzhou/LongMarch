@@ -1,4 +1,5 @@
 #pragma once
+
 #include "grassland/vulkan/device.h"
 #include "grassland/vulkan/surface.h"
 #include "grassland/vulkan/vulkan_utils.h"
@@ -48,6 +49,20 @@ class Swapchain {
   [[nodiscard]] const std::vector<VkImageView> &ImageViews() const {
     return image_views_;
   }
+
+  VkImage Image(uint32_t index) {
+    return images_[index];
+  }
+
+  VkImageView ImageView(uint32_t index) {
+    return image_views_[index];
+  }
+
+  // Acquire an image from the swap chain
+  VkResult AcquireNextImage(uint64_t timeout,
+                            VkSemaphore semaphore,
+                            VkFence fence,
+                            uint32_t *image_index);
 
   static SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device,
                                                        VkSurfaceKHR surface);
