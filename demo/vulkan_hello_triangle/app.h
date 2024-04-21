@@ -1,6 +1,12 @@
 #pragma once
 
+#include "Eigen/Eigen"
 #include "long_march.h"
+
+struct Vertex {
+  Eigen::Vector3f pos;
+  Eigen::Vector3f color;
+};
 
 class Application {
  public:
@@ -52,4 +58,14 @@ class Application {
 
   uint32_t current_frame_ = 0;
   uint32_t image_index_ = 0;
+
+  std::shared_ptr<long_march::vulkan::Image> frame_image_;
+  std::shared_ptr<long_march::vulkan::RenderPass> render_pass_;
+  std::shared_ptr<long_march::vulkan::Framebuffer> framebuffer_;
+
+  std::shared_ptr<long_march::vulkan::Buffer> vertex_buffer_;
+  std::shared_ptr<long_march::vulkan::Buffer> index_buffer_;
+
+  std::shared_ptr<long_march::vulkan::PipelineLayout> pipeline_layout_;
+  std::shared_ptr<long_march::vulkan::Pipeline> pipeline_;
 };

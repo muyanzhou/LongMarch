@@ -17,10 +17,12 @@ class CommandPool {
     return device_;
   }
 
-  VkResult AllocateCommandBuffer(VkCommandBufferLevel level,
-                                 double_ptr<CommandBuffer> pp_command_buffer);
+  VkResult AllocateCommandBuffer(
+      VkCommandBufferLevel level,
+      double_ptr<CommandBuffer> pp_command_buffer) const;
 
-  VkResult AllocateCommandBuffer(double_ptr<CommandBuffer> pp_command_buffer);
+  VkResult AllocateCommandBuffer(
+      double_ptr<CommandBuffer> pp_command_buffer) const;
 
  private:
   const class Device *device_;

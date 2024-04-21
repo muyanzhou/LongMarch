@@ -128,42 +128,109 @@ void Application::OnInit() {
   if (result != VK_SUCCESS) {
     throw std::runtime_error("Failed to create fragment shader module");
   }
-}
 
-void Application::OnUpdate() {
-}
+  result = device_->CreateImage(VK_FORMAT_B8G8R8A8_UNORM, swapchain_->Extent(),
+                                &frame_image_);
+  if (result != VK_SUCCESS) {
+    throw std::runtime_error("Failed to create frame image");
+  }
 
-void Application::OnRender() {
-  BeginFrame();
+  std::vector<VkAttachmentDescription> attachments(1);
+  std::vector<VkAttachmentReference> color_references(1);
 
-  VkImage image = swapchain_->Image(image_index_);
+  attachments[0].format = VK_FORMAT_B8G8R8A8_UNORM;
+  attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+  attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  attachments[0].finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 
-  VkCommandBuffer command_buffer = command_buffers_[current_frame_]->Handle();
+  color_references[0].attachment = 0;
+  color_references[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-  // Transit Layout from UNDEFINED to PRESENT_SRC
-  VkImageMemoryBarrier barrier{};
-  barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-  barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-  barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-  barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-  barrier.image = image;
-  barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  barrier.subresourceRange.baseMipLevel = 0;
-  barrier.subresourceRange.levelCount = 1;
-  barrier.subresourceRange.baseArrayLayer = 0;
-  barrier.subresourceRange.layerCount = 1;
-  barrier.srcAccessMask = 0;
-  barrier.dstAccessMask = 0;
+  result =
+      device_->CreateRenderPass(attachments, color_references, &render_pass_);
+  if (result != VK_SUCCESS) {
+    throw std::runtime_error("Failed to create render pass");
+  }
 
-  vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0,
-                       nullptr, 0, nullptr, 1, &barrier);
+  std::vector<VkImageView> attachments_view = {frame_image_->ImageView()};
+  result = render_pass_->CreateFramebuffer(attachments_view,
+                                           swapchain_->Extent(), &framebuffer_);
+  if (result != VK_SUCCESS) {
+    throw std::runtime_error("Failed to create framebuffer");
+  }
 
-  EndFrame();
+  std::vector<Vertex> vertices = {
+      {{0.0f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+      {{0.5f, 0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+      {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},
+  };
+
+  std::vector<uint32_t> indices = {0, 1, 2};
+
+  result = device_->CreateBuffer(
+      vertices.size() * sizeof(Vertex),
+      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+      VMA_MEMORY_USAGE_GPU_ONLY, &vertex_buffer_);
+  if (result != VK_SUCCESS) {
+    throw std::runtime_error("Failed to create vertex buffer");
+  }
+
+  result = device_->CreateBuffer(
+      indices.size() * sizeof(uint32_t),
+      VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+      VMA_MEMORY_USAGE_GPU_ONLY, &index_buffer_);
+  if (result != VK_SUCCESS) {
+    throw std::runtime_error("Failed to create index buffer");
+  }
+
+  long_march::vulkan::UploadBuffer(
+      transfer_queue_.get(), transfer_command_pool_.get(), vertex_buffer_.get(),
+      vertices.data(), vertices.size() * sizeof(Vertex));
+  long_march::vulkan::UploadBuffer(
+      transfer_queue_.get(), transfer_command_pool_.get(), index_buffer_.get(),
+      indices.data(), indices.size() * sizeof(uint32_t));
+
+  result = device_->CreatePipelineLayout({}, &pipeline_layout_);
+  if (result != VK_SUCCESS) {
+    throw std::runtime_error("Failed to create pipeline layout");
+  }
+
+  long_march::vulkan::PipelineSettings pipeline_settings(
+      render_pass_.get(), pipeline_layout_.get(), 0);
+  pipeline_settings.AddInputBinding(0, sizeof(Vertex),
+                                    VK_VERTEX_INPUT_RATE_VERTEX);
+  pipeline_settings.AddInputAttribute(0, 0, VK_FORMAT_R32G32B32_SFLOAT,
+                                      offsetof(Vertex, pos));
+  pipeline_settings.AddInputAttribute(0, 1, VK_FORMAT_R32G32B32_SFLOAT,
+                                      offsetof(Vertex, color));
+  pipeline_settings.AddShaderStage(vertex_shader_.get(),
+                                   VK_SHADER_STAGE_VERTEX_BIT);
+  pipeline_settings.AddShaderStage(fragment_shader_.get(),
+                                   VK_SHADER_STAGE_FRAGMENT_BIT);
+  pipeline_settings.SetPrimitiveTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+  pipeline_settings.SetMultiSampleState(VK_SAMPLE_COUNT_1_BIT);
+  pipeline_settings.SetCullMode(VK_CULL_MODE_NONE);
+
+  result = device_->CreatePipeline(pipeline_settings, &pipeline_);
+  if (result != VK_SUCCESS) {
+    throw std::runtime_error("Failed to create pipeline");
+  }
 }
 
 void Application::OnShutdown() {
+  pipeline_.reset();
+  pipeline_layout_.reset();
+
+  vertex_buffer_.reset();
+  index_buffer_.reset();
+
+  framebuffer_.reset();
+  render_pass_.reset();
+  frame_image_.reset();
   fragment_shader_.reset();
   vertex_shader_.reset();
   image_available_semaphores_.clear();
@@ -179,6 +246,96 @@ void Application::OnShutdown() {
   device_.reset();
   surface_.reset();
   instance_.reset();
+}
+
+void Application::OnUpdate() {
+}
+
+void Application::OnRender() {
+  BeginFrame();
+
+  VkImage swapchain_image = swapchain_->Image(image_index_);
+
+  VkCommandBuffer command_buffer = command_buffers_[current_frame_]->Handle();
+
+  // Begin RenderPass
+  VkRenderPassBeginInfo render_pass_begin_info{};
+  render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  render_pass_begin_info.renderPass = render_pass_->Handle();
+  render_pass_begin_info.framebuffer = framebuffer_->Handle();
+  render_pass_begin_info.renderArea.offset = {0, 0};
+  render_pass_begin_info.renderArea.extent = swapchain_->Extent();
+  VkClearValue clear_color = {0.6f, 0.7f, 0.8f, 1.0f};
+  render_pass_begin_info.clearValueCount = 1;
+  render_pass_begin_info.pClearValues = &clear_color;
+
+  vkCmdBeginRenderPass(command_buffer, &render_pass_begin_info,
+                       VK_SUBPASS_CONTENTS_INLINE);
+
+  // Bind Pipeline
+  vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    pipeline_->Handle());
+
+  // Set Scissor and Viewport
+  VkExtent2D extent = swapchain_->Extent();
+  VkViewport viewport{};
+  viewport.x = 0.0f;
+  viewport.y = 0.0f;
+  viewport.width = static_cast<float>(extent.width);
+  viewport.height = static_cast<float>(extent.height);
+  viewport.minDepth = 0.0f;
+  viewport.maxDepth = 1.0f;
+  vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+
+  VkRect2D scissor{};
+  scissor.offset = {0, 0};
+  scissor.extent = extent;
+  vkCmdSetScissor(command_buffer, 0, 1, &scissor);
+
+  // Bind Vertex Buffer
+  VkBuffer vertex_buffers[] = {vertex_buffer_->Handle()};
+  VkDeviceSize offsets[] = {0};
+  vkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffers, offsets);
+
+  // Bind Index Buffer
+  vkCmdBindIndexBuffer(command_buffer, index_buffer_->Handle(), 0,
+                       VK_INDEX_TYPE_UINT32);
+
+  // Draw
+  vkCmdDrawIndexed(command_buffer, 3, 1, 0, 0, 0);
+
+  // End RenderPass
+  vkCmdEndRenderPass(command_buffer);
+
+  // Transition swapchain_image layout from UNDEFINED to TRANSFER_DST
+  long_march::vulkan::TransitImageLayout(
+      command_buffer, swapchain_image, VK_IMAGE_LAYOUT_UNDEFINED,
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+      VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT,
+      VK_IMAGE_ASPECT_COLOR_BIT);
+
+  // Copy from frame_image to swapchain_image
+  VkImageCopy copy_region{};
+  copy_region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  copy_region.srcSubresource.layerCount = 1;
+  copy_region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  copy_region.dstSubresource.layerCount = 1;
+  copy_region.extent.width = swapchain_->Extent().width;
+  copy_region.extent.height = swapchain_->Extent().height;
+  copy_region.extent.depth = 1;
+
+  vkCmdCopyImage(command_buffer, frame_image_->Handle(),
+                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, swapchain_image,
+                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
+
+  // Transition swapchain_image layout from TRANSFER_DST to PRESENT_SRC
+  long_march::vulkan::TransitImageLayout(
+      command_buffer, swapchain_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_PIPELINE_STAGE_TRANSFER_BIT,
+      VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, 0,
+      VK_IMAGE_ASPECT_COLOR_BIT);
+
+  EndFrame();
 }
 
 void Application::BeginFrame() {

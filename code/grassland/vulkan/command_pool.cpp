@@ -15,7 +15,7 @@ CommandPool::~CommandPool() {
 
 VkResult CommandPool::AllocateCommandBuffer(
     VkCommandBufferLevel level,
-    double_ptr<CommandBuffer> pp_command_buffer) {
+    double_ptr<CommandBuffer> pp_command_buffer) const {
   if (!pp_command_buffer) {
     SetErrorMessage("pp_command_buffer is nullptr");
     return VK_ERROR_INITIALIZATION_FAILED;
@@ -38,7 +38,7 @@ VkResult CommandPool::AllocateCommandBuffer(
 }
 
 VkResult CommandPool::AllocateCommandBuffer(
-    double_ptr<CommandBuffer> pp_command_buffer) {
+    double_ptr<CommandBuffer> pp_command_buffer) const {
   return AllocateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY,
                                pp_command_buffer);
 }

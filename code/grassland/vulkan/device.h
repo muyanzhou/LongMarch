@@ -48,9 +48,9 @@ class Device {
     return vkDeviceWaitIdle(device_);
   }
 
-  VkResult GetQueue(uint32_t queue_family_index,
-                    int queue_index,
-                    double_ptr<Queue> pp_queue) const;
+  [[nodiscard]] VkResult GetQueue(uint32_t queue_family_index,
+                                  int queue_index,
+                                  double_ptr<Queue> pp_queue) const;
 
   [[nodiscard]] VkResult CreateSwapchain(
       const Surface *surface,
@@ -82,6 +82,88 @@ class Device {
   [[nodiscard]] VkResult CreateDescriptorSetLayout(
       const std::vector<VkDescriptorSetLayoutBinding> &bindings,
       double_ptr<DescriptorSetLayout> pp_descriptor_set_layout) const;
+
+  [[nodiscard]] VkResult CreateRenderPass(
+      const std::vector<VkAttachmentDescription> &attachment_descriptions,
+      const std::vector<struct SubpassSettings> &subpass_settings,
+      const std::vector<VkSubpassDependency> &dependencies,
+      double_ptr<RenderPass> pp_render_pass) const;
+
+  [[nodiscard]] VkResult CreateRenderPass(
+      const std::vector<VkAttachmentDescription> &attachment_descriptions,
+      const std::vector<VkAttachmentReference> &color_attachment_references,
+      const std::optional<VkAttachmentReference> &depth_attachment_reference,
+      const std::vector<VkAttachmentReference> &resolve_attachment_references,
+      double_ptr<RenderPass> pp_render_pass) const;
+
+  [[nodiscard]] VkResult CreateRenderPass(
+      const std::vector<VkAttachmentDescription> &attachment_descriptions,
+      const std::vector<VkAttachmentReference> &color_attachment_references,
+      const std::optional<VkAttachmentReference> &depth_attachment_reference,
+      double_ptr<RenderPass> pp_render_pass) const;
+
+  [[nodiscard]] VkResult CreateRenderPass(
+      const std::vector<VkAttachmentDescription> &attachment_descriptions,
+      const std::vector<VkAttachmentReference> &color_attachment_references,
+      double_ptr<RenderPass> pp_render_pass) const;
+
+  [[nodiscard]] VkResult CreateImage(VkFormat format,
+                                     VkExtent2D extent,
+                                     VkImageUsageFlags usage,
+                                     VkImageAspectFlags aspect,
+                                     VkSampleCountFlagBits sample_count,
+                                     VmaMemoryUsage mem_usage,
+                                     double_ptr<Image> pp_image) const;
+
+  [[nodiscard]] VkResult CreateImage(VkFormat format,
+                                     VkExtent2D extent,
+                                     VkImageUsageFlags usage,
+                                     VkImageAspectFlags aspect,
+                                     VkSampleCountFlagBits sample_count,
+                                     double_ptr<Image> pp_image) const;
+
+  [[nodiscard]] VkResult CreateImage(VkFormat format,
+                                     VkExtent2D extent,
+                                     VkImageUsageFlags usage,
+                                     VkImageAspectFlags aspect,
+                                     double_ptr<Image> pp_image) const;
+
+  [[nodiscard]] VkResult CreateImage(VkFormat format,
+                                     VkExtent2D extent,
+                                     VkImageUsageFlags usage,
+                                     double_ptr<Image> pp_image) const;
+
+  [[nodiscard]] VkResult CreateImage(VkFormat format,
+                                     VkExtent2D extent,
+                                     double_ptr<Image> pp_image) const;
+
+  [[nodiscard]] VkResult CreateSampler(VkFilter mag_filter,
+                                       VkFilter min_filter,
+                                       VkSamplerAddressMode address_mode_u,
+                                       VkSamplerAddressMode address_mode_v,
+                                       VkSamplerAddressMode address_mode_w,
+                                       VkBool32 anisotropy_enable,
+                                       VkBorderColor border_color,
+                                       VkSamplerMipmapMode mipmap_mode,
+                                       double_ptr<Sampler> pp_sampler) const;
+
+  [[nodiscard]] VkResult CreateBuffer(VkDeviceSize size,
+                                      VkBufferUsageFlags usage,
+                                      VmaMemoryUsage memory_usage,
+                                      VmaAllocationCreateFlags flags,
+                                      double_ptr<Buffer> pp_buffer) const;
+
+  [[nodiscard]] VkResult CreateBuffer(VkDeviceSize size,
+                                      VkBufferUsageFlags usage,
+                                      VmaMemoryUsage memory_usage,
+                                      double_ptr<Buffer> pp_buffer) const;
+
+  [[nodiscard]] VkResult CreatePipelineLayout(
+      const std::vector<VkDescriptorSetLayout> &descriptor_set_layouts,
+      double_ptr<PipelineLayout> pp_pipeline_layout) const;
+
+  [[nodiscard]] VkResult CreatePipeline(struct PipelineSettings settings,
+                                        double_ptr<Pipeline> pp_pipeline) const;
 
  private:
   const class Instance *instance_{};
