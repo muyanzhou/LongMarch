@@ -48,6 +48,10 @@ class Device {
     return vkDeviceWaitIdle(device_);
   }
 
+  VkResult GetQueue(uint32_t queue_family_index,
+                    int queue_index,
+                    double_ptr<Queue> pp_queue) const;
+
   VkResult CreateSwapchain(const Surface *surface,
                            double_ptr<Swapchain> pp_swapchain) const;
 

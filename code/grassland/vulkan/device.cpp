@@ -2,6 +2,7 @@
 
 #include <utility>
 
+#include "grassland/vulkan/queue.h"
 #include "grassland/vulkan/swap_chain.h"
 
 namespace grassland::vulkan {
@@ -99,6 +100,41 @@ VkResult Device::CreateSwapchain(const Surface *surface,
 
   pp_swapchain.construct(this, surface, swapchain, surfaceFormat.format,
                          extent);
+
+  return VK_SUCCESS;
+}
+
+VkResult Device::GetQueue(uint32_t queue_family_index,
+                          int queue_index,
+                          double_ptr<Queue> pp_queue) const {
+  if (!pp_queue) {
+    SetErrorMessage("pp_queue is nullptr");
+    return VK_ERROR_INITIALIZATION_FAILED;
+  }
+
+  if (queue_index < 0) {
+    queue_index =
+        create_info_.queue_families.at(int(queue_family_index)).size() +
+        queue_index;
+    if (queue_index < 0) {
+      SetErrorMessage("queue_index is out of range.");
+      return VK_ERROR_INITIALIZATION_FAILED;
+    }
+  }
+
+  if (queue_index >=
+      create_info_.queue_families.at(int(queue_family_index)).size()) {
+    Warning(
+        "queue_index exceeded the number of queues in the queue family, using "
+        "the last queue. this may degrade performance.");
+    queue_index =
+        create_info_.queue_families.at(int(queue_family_index)).size() - 1;
+  }
+
+  VkQueue queue;
+  vkGetDeviceQueue(device_, queue_family_index, queue_index, &queue);
+
+  pp_queue.construct(this, queue_family_index, queue);
 
   return VK_SUCCESS;
 }

@@ -40,15 +40,31 @@ void Application::OnInit() {
     throw std::runtime_error("Failed to create Vulkan surface");
   }
 
-  result = instance_->CreateDevice(surface_.get(), true, &device_);
+  long_march::vulkan::DeviceFeatureRequirement feature_requirement;
+  feature_requirement.surface = surface_.get();
+  feature_requirement.enable_raytracing_extension = false;
+
+  result = instance_->CreateDevice(surface_.get(), false, &device_);
   if (result != VK_SUCCESS) {
     throw std::runtime_error("Failed to create Vulkan device");
   }
+
+  long_march::LogInfo(
+      "Device: {}",
+      device_->PhysicalDevice().GetPhysicalDeviceProperties().deviceName);
 
   result = device_->CreateSwapchain(surface_.get(), &swapchain_);
   if (result != VK_SUCCESS) {
     throw std::runtime_error("Failed to create Vulkan swapchain");
   }
+
+  device_->GetQueue(device_->PhysicalDevice().GraphicsFamilyIndex(), 0,
+                    &graphics_queue_);
+  device_->GetQueue(
+      device_->PhysicalDevice().PresentFamilyIndex(surface_.get()), 0,
+      &present_queue_);
+  device_->GetQueue(device_->PhysicalDevice().TransferFamilyIndex(), -1,
+                    &transfer_queue_);
 }
 
 void Application::OnUpdate() {
