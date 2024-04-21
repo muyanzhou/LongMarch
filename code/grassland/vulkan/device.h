@@ -70,6 +70,10 @@ class Device {
   [[nodiscard]] VkResult CreateCommandPool(
       double_ptr<CommandPool> pp_command_pool) const;
 
+  [[nodiscard]] VkResult CreateShaderModule(
+      const std::vector<uint32_t> &code,
+      double_ptr<ShaderModule> pp_shader_module) const;
+
  private:
   const class Instance *instance_{};
 

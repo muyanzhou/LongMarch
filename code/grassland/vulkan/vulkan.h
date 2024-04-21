@@ -7,5 +7,6 @@
 #include "grassland/vulkan/instance.h"
 #include "grassland/vulkan/queue.h"
 #include "grassland/vulkan/semaphore.h"
+#include "grassland/vulkan/shader_module.h"
 #include "grassland/vulkan/surface.h"
 #include "grassland/vulkan/swap_chain.h"

@@ -1,5 +1,11 @@
 #include "app.h"
 
+namespace {
+
+#include "built_in_shaders.inl"
+
+}
+
 Application::Application() {
   if (!glfwInit()) {
     throw std::runtime_error("Failed to initialize GLFW");
@@ -104,6 +110,24 @@ void Application::OnInit() {
       throw std::runtime_error("Failed to allocate command buffer");
     }
   }
+
+  result = device_->CreateShaderModule(
+      long_march::vulkan::CompileGLSLToSPIRV(
+          GetShaderCode("shaders/hello_triangle.vert"),
+          VK_SHADER_STAGE_VERTEX_BIT),
+      &vertex_shader_);
+  if (result != VK_SUCCESS) {
+    throw std::runtime_error("Failed to create vertex shader module");
+  }
+
+  result = device_->CreateShaderModule(
+      long_march::vulkan::CompileGLSLToSPIRV(
+          GetShaderCode("shaders/hello_triangle.frag"),
+          VK_SHADER_STAGE_FRAGMENT_BIT),
+      &fragment_shader_);
+  if (result != VK_SUCCESS) {
+    throw std::runtime_error("Failed to create fragment shader module");
+  }
 }
 
 void Application::OnUpdate() {
@@ -140,6 +164,8 @@ void Application::OnRender() {
 }
 
 void Application::OnShutdown() {
+  fragment_shader_.reset();
+  vertex_shader_.reset();
   image_available_semaphores_.clear();
   render_finished_semaphores_.clear();
   in_flight_fences_.clear();

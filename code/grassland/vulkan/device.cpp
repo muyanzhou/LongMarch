@@ -6,6 +6,7 @@
 #include "grassland/vulkan/fence.h"
 #include "grassland/vulkan/queue.h"
 #include "grassland/vulkan/semaphore.h"
+#include "grassland/vulkan/shader_module.h"
 #include "grassland/vulkan/swap_chain.h"
 
 namespace grassland::vulkan {
@@ -215,5 +216,28 @@ VkResult Device::CreateCommandPool(
   return CreateCommandPool(physical_device_.GraphicsFamilyIndex(),
                            VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
                            pp_command_pool);
+}
+
+VkResult Device::CreateShaderModule(
+    const std::vector<uint32_t> &code,
+    double_ptr<ShaderModule> pp_shader_module) const {
+  if (!pp_shader_module) {
+    SetErrorMessage("pp_shader_module is nullptr");
+    return VK_ERROR_INITIALIZATION_FAILED;
+  }
+
+  VkShaderModule shader_module;
+  VkShaderModuleCreateInfo create_info = {};
+  create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+  create_info.codeSize = code.size() * sizeof(uint32_t);
+  create_info.pCode = code.data();
+
+  RETURN_IF_FAILED_VK(
+      vkCreateShaderModule(device_, &create_info, nullptr, &shader_module),
+      "failed to create shader module!");
+
+  pp_shader_module.construct(this, shader_module);
+
+  return VK_SUCCESS;
 }
 }  // namespace grassland::vulkan

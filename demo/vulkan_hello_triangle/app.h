@@ -47,6 +47,9 @@ class Application {
       render_finished_semaphores_;
   std::vector<std::shared_ptr<long_march::vulkan::Fence>> in_flight_fences_;
 
+  std::shared_ptr<long_march::vulkan::ShaderModule> vertex_shader_;
+  std::shared_ptr<long_march::vulkan::ShaderModule> fragment_shader_;
+
   uint32_t current_frame_ = 0;
   uint32_t image_index_ = 0;
 };
