@@ -1,0 +1,38 @@
+#include "grassland/vulkan/descriptor_pool.h"
+
+#include "grassland/vulkan/descriptor_set.h"
+
+namespace grassland::vulkan {
+DescriptorPool::DescriptorPool(const struct Device *device,
+                               VkDescriptorPool descriptor_pool)
+    : device_(device), descriptor_pool_(descriptor_pool) {
+}
+
+DescriptorPool::~DescriptorPool() {
+  vkDestroyDescriptorPool(device_->Handle(), descriptor_pool_, nullptr);
+}
+
+VkResult DescriptorPool::AllocateDescriptorSets(
+    VkDescriptorSetLayout layouts,
+    double_ptr<DescriptorSet> pp_descriptor_set) const {
+  if (!pp_descriptor_set) {
+    SetErrorMessage("pp_descriptor_sets is nullptr");
+    return VK_ERROR_INITIALIZATION_FAILED;
+  }
+
+  VkDescriptorSetAllocateInfo allocate_info{};
+  allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  allocate_info.descriptorPool = descriptor_pool_;
+  allocate_info.descriptorSetCount = 1;
+  allocate_info.pSetLayouts = &layouts;
+
+  VkDescriptorSet descriptor_set;
+  RETURN_IF_FAILED_VK(vkAllocateDescriptorSets(device_->Handle(),
+                                               &allocate_info, &descriptor_set),
+                      "failed to allocate descriptor set");
+
+  pp_descriptor_set.construct(this, descriptor_set);
+
+  return VK_SUCCESS;
+}
+}  // namespace grassland::vulkan

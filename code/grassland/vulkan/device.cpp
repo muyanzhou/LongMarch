@@ -3,6 +3,9 @@
 #include <utility>
 
 #include "grassland/vulkan/command_pool.h"
+#include "grassland/vulkan/descriptor_pool.h"
+#include "grassland/vulkan/descriptor_set.h"
+#include "grassland/vulkan/descriptor_set_layout.h"
 #include "grassland/vulkan/fence.h"
 #include "grassland/vulkan/queue.h"
 #include "grassland/vulkan/semaphore.h"
@@ -237,6 +240,55 @@ VkResult Device::CreateShaderModule(
       "failed to create shader module!");
 
   pp_shader_module.construct(this, shader_module);
+
+  return VK_SUCCESS;
+}
+
+VkResult Device::CreateDescriptorPool(
+    const std::vector<VkDescriptorPoolSize> &pool_sizes,
+    uint32_t max_sets,
+    double_ptr<DescriptorPool> pp_descriptor_pool) const {
+  if (!pp_descriptor_pool) {
+    SetErrorMessage("pp_descriptor_pool is nullptr");
+    return VK_ERROR_INITIALIZATION_FAILED;
+  }
+
+  VkDescriptorPool descriptor_pool;
+  VkDescriptorPoolCreateInfo create_info = {};
+  create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  create_info.poolSizeCount = pool_sizes.size();
+  create_info.pPoolSizes = pool_sizes.data();
+  create_info.maxSets = max_sets;
+
+  RETURN_IF_FAILED_VK(
+      vkCreateDescriptorPool(device_, &create_info, nullptr, &descriptor_pool),
+      "failed to create descriptor pool!");
+
+  pp_descriptor_pool.construct(this, descriptor_pool);
+
+  return VK_SUCCESS;
+}
+
+VkResult Device::CreateDescriptorSetLayout(
+    const std::vector<VkDescriptorSetLayoutBinding> &bindings,
+    double_ptr<DescriptorSetLayout> pp_descriptor_set_layout) const {
+  if (!pp_descriptor_set_layout) {
+    SetErrorMessage("pp_descriptor_set_layout is nullptr");
+    return VK_ERROR_INITIALIZATION_FAILED;
+  }
+
+  VkDescriptorSetLayout descriptor_set_layout;
+  VkDescriptorSetLayoutCreateInfo create_info = {};
+  create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  create_info.bindingCount = bindings.size();
+  create_info.pBindings = bindings.data();
+
+  RETURN_IF_FAILED_VK(
+      vkCreateDescriptorSetLayout(device_, &create_info, nullptr,
+                                  &descriptor_set_layout),
+      "failed to create descriptor set layout!");
+
+  pp_descriptor_set_layout.construct(this, descriptor_set_layout, bindings);
 
   return VK_SUCCESS;
 }

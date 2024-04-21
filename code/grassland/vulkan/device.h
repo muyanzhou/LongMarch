@@ -74,6 +74,15 @@ class Device {
       const std::vector<uint32_t> &code,
       double_ptr<ShaderModule> pp_shader_module) const;
 
+  [[nodiscard]] VkResult CreateDescriptorPool(
+      const std::vector<VkDescriptorPoolSize> &pool_sizes,
+      uint32_t max_sets,
+      double_ptr<DescriptorPool> pp_descriptor_pool) const;
+
+  [[nodiscard]] VkResult CreateDescriptorSetLayout(
+      const std::vector<VkDescriptorSetLayoutBinding> &bindings,
+      double_ptr<DescriptorSetLayout> pp_descriptor_set_layout) const;
+
  private:
   const class Instance *instance_{};
 
