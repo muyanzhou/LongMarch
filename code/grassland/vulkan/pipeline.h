@@ -5,8 +5,8 @@
 
 namespace grassland::vulkan {
 struct PipelineSettings {
-  explicit PipelineSettings(RenderPass *render_pass = nullptr,
-                            PipelineLayout *pipeline_layout = nullptr,
+  explicit PipelineSettings(const RenderPass *render_pass = nullptr,
+                            const PipelineLayout *pipeline_layout = nullptr,
                             int subpass = 0);
 
   void AddShaderStage(ShaderModule *shader_module, VkShaderStageFlagBits stage);
@@ -44,10 +44,10 @@ struct PipelineSettings {
       });
 
   // Render pass
-  RenderPass *render_pass;
+  const RenderPass *render_pass;
 
   // Pipeline layout
-  PipelineLayout *pipeline_layout;
+  const PipelineLayout *pipeline_layout;
 
   // Shader stages
   std::vector<VkPipelineShaderStageCreateInfo> shader_stage_create_infos;

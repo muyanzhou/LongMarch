@@ -12,8 +12,8 @@ DescriptorPool::~DescriptorPool() {
   vkDestroyDescriptorPool(device_->Handle(), descriptor_pool_, nullptr);
 }
 
-VkResult DescriptorPool::AllocateDescriptorSets(
-    VkDescriptorSetLayout layouts,
+VkResult DescriptorPool::AllocateDescriptorSet(
+    VkDescriptorSetLayout layout,
     double_ptr<DescriptorSet> pp_descriptor_set) const {
   if (!pp_descriptor_set) {
     SetErrorMessage("pp_descriptor_sets is nullptr");
@@ -24,7 +24,7 @@ VkResult DescriptorPool::AllocateDescriptorSets(
   allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
   allocate_info.descriptorPool = descriptor_pool_;
   allocate_info.descriptorSetCount = 1;
-  allocate_info.pSetLayouts = &layouts;
+  allocate_info.pSetLayouts = &layout;
 
   VkDescriptorSet descriptor_set;
   RETURN_IF_FAILED_VK(vkAllocateDescriptorSets(device_->Handle(),

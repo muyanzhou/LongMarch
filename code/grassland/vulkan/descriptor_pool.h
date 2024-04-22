@@ -51,7 +51,9 @@ struct DescriptorPoolSize {
     std::vector<VkDescriptorPoolSize> pool_sizes;
     pool_sizes.reserve(descriptor_type_count.size());
     for (auto &[type, count] : descriptor_type_count) {
-      pool_sizes.push_back({type, count});
+      if (count) {
+        pool_sizes.push_back({type, count});
+      }
     }
     return pool_sizes;
   }
@@ -71,8 +73,8 @@ class DescriptorPool {
     return descriptor_pool_;
   }
 
-  VkResult AllocateDescriptorSets(
-      VkDescriptorSetLayout layouts,
+  VkResult AllocateDescriptorSet(
+      VkDescriptorSetLayout layout,
       double_ptr<DescriptorSet> pp_descriptor_set) const;
 
  private:

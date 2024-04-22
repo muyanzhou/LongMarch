@@ -4,8 +4,8 @@
 
 namespace grassland::vulkan {
 
-PipelineSettings::PipelineSettings(RenderPass *render_pass,
-                                   PipelineLayout *pipeline_layout,
+PipelineSettings::PipelineSettings(const RenderPass *render_pass,
+                                   const PipelineLayout *pipeline_layout,
                                    int subpass)
     : render_pass(render_pass),
       pipeline_layout(pipeline_layout),

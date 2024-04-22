@@ -264,6 +264,7 @@ VkResult Device::CreateDescriptorPool(
   create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   create_info.poolSizeCount = pool_sizes.size();
   create_info.pPoolSizes = pool_sizes.data();
+  create_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
   create_info.maxSets = max_sets;
 
   RETURN_IF_FAILED_VK(
