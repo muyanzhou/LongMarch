@@ -2,9 +2,11 @@ cmake_minimum_required(VERSION 3.22)
 
 if (VCPKG_PATH)
     set(CMAKE_TOOLCHAIN_FILE "${VCPKG_PATH}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
-else ()
+endif ()
+
+if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     # message with error: You must set VCPKG_PATH to your vcpkg root directory
-    message(FATAL_ERROR "You must set VCPKG_PATH to your vcpkg root directory\ne.g. cmake -S . -B build -DVCPKG_PATH=/path/to/vcpkg")
+    message(FATAL_ERROR "You must set CMAKE_TOOLCHAIN_FILE to your vcpkg script.\nYou may use VCPKG_PATH pointing to your vcpkg root directory for convenience.\ne.g. cmake -S . -B build -DVCPKG_PATH=/path/to/vcpkg")
 endif ()
 
 project(LongMarch)
@@ -37,7 +39,7 @@ set(VMA_LIB_NAME Vulkan::Headers GPUOpen::VulkanMemoryAllocator)
 list(APPEND LIB_LIST ${VMA_LIB_NAME})
 
 find_package(glslang CONFIG REQUIRED)
-set(GLSLANG_LIB_NAME glslang::OSDependent glslang::glslang glslang::MachineIndependent glslang::GenericCodeGen glslang::glslang-default-resource-limits glslang::OGLCompiler glslang::SPVRemapper glslang::SPIRV glslang::HLSL)
+set(GLSLANG_LIB_NAME glslang::OSDependent glslang::glslang glslang::MachineIndependent glslang::GenericCodeGen glslang::glslang-default-resource-limits glslang::SPVRemapper glslang::SPIRV) # glslang::OGLCompiler glslang::HLSL
 list(APPEND LIB_LIST ${GLSLANG_LIB_NAME})
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
