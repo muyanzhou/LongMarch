@@ -128,7 +128,7 @@ VkExtent2D Swapchain::ChooseSwapExtent(
 VkResult Swapchain::AcquireNextImage(uint64_t timeout,
                                      VkSemaphore semaphore,
                                      VkFence fence,
-                                     uint32_t *image_index) {
+                                     uint32_t *image_index) const {
   return vkAcquireNextImageKHR(device_->Handle(), swapchain_, timeout,
                                semaphore, fence, image_index);
 }

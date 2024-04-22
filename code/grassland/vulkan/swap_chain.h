@@ -22,23 +22,23 @@ class Swapchain {
 
   ~Swapchain();
 
-  VkSwapchainKHR Handle() {
+  VkSwapchainKHR Handle() const {
     return swapchain_;
   }
 
-  const class Device *Device() {
+  const class Device *Device() const {
     return device_;
   }
 
-  const class Surface *Surface() {
+  const class Surface *Surface() const {
     return surface_;
   }
 
-  VkFormat Format() {
+  VkFormat Format() const {
     return format_;
   }
 
-  VkExtent2D Extent() {
+  VkExtent2D Extent() const {
     return extent_;
   }
 
@@ -50,11 +50,11 @@ class Swapchain {
     return image_views_;
   }
 
-  VkImage Image(uint32_t index) {
+  VkImage Image(uint32_t index) const {
     return images_[index];
   }
 
-  VkImageView ImageView(uint32_t index) {
+  VkImageView ImageView(uint32_t index) const {
     return image_views_[index];
   }
 
@@ -62,7 +62,7 @@ class Swapchain {
   VkResult AcquireNextImage(uint64_t timeout,
                             VkSemaphore semaphore,
                             VkFence fence,
-                            uint32_t *image_index);
+                            uint32_t *image_index) const;
 
   static SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device,
                                                        VkSurfaceKHR surface);
