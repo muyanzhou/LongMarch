@@ -16,7 +16,7 @@ class Image {
         VmaAllocation allocation);
   ~Image();
 
-  [[nodiscard]] const Device *Device() const {
+  [[nodiscard]] const class Device *Device() const {
     return device_;
   }
 

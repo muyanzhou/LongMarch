@@ -10,7 +10,7 @@ class Queue {
 
   [[nodiscard]] VkQueue Handle() const;
 
-  [[nodiscard]] const Device *Device() const {
+  [[nodiscard]] const class Device *Device() const {
     return device_;
   }
   [[nodiscard]] uint32_t QueueFamilyIndex() const {

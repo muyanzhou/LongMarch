@@ -14,7 +14,7 @@ class CommandBuffer {
     return command_buffer_;
   }
 
-  [[nodiscard]] const CommandPool *CommandPool() const {
+  [[nodiscard]] const class CommandPool *CommandPool() const {
     return command_pool_;
   }
 

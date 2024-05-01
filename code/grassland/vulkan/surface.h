@@ -15,7 +15,7 @@ class Surface {
 
   [[nodiscard]] GLFWwindow *Window() const;
 
-  [[nodiscard]] const Instance *Instance() const;
+  [[nodiscard]] const class Instance *Instance() const;
 
  private:
   const class Instance *instance_{};

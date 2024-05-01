@@ -88,7 +88,7 @@ class Pipeline {
     return pipeline_;
   }
 
-  [[nodiscard]] const Device *Device() const {
+  [[nodiscard]] const class Device *Device() const {
     return device_;
   }
 

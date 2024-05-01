@@ -13,7 +13,7 @@ class ShaderModule {
     return shader_module_;
   }
 
-  [[nodiscard]] const Device *Device() const {
+  [[nodiscard]] const class Device *Device() const {
     return device_;
   }
 

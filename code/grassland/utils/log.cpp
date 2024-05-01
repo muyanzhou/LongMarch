@@ -9,7 +9,11 @@ std::string GetTimestamp() {
   auto now = std::chrono::system_clock::now();
   std::time_t current_time = std::chrono::system_clock::to_time_t(now);
   std::tm local_time{};
+#ifdef _WIN32
   localtime_s(&local_time, &current_time);
+#else
+  localtime_r(&current_time, &local_time);
+#endif
   auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(
                           now.time_since_epoch()) %
                       1000;
