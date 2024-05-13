@@ -658,6 +658,10 @@ VkResult Device::CreatePipeline(struct PipelineSettings settings,
           : nullptr;
   pipeline_create_info.subpass = settings.subpass;
   pipeline_create_info.basePipelineHandle = VK_NULL_HANDLE;
+  pipeline_create_info.pTessellationState =
+      settings.tessellation_state_create_info.has_value()
+          ? &settings.tessellation_state_create_info.value()
+          : nullptr;
 
   VkPipeline pipeline;
   RETURN_IF_FAILED_VK(

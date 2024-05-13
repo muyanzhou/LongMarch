@@ -61,6 +61,8 @@ function(PACK_SHADER_CODE TARGET_NAME)
     file(GLOB_RECURSE SHADER_FILES
             ${CMAKE_CURRENT_SOURCE_DIR}/*.vert
             ${CMAKE_CURRENT_SOURCE_DIR}/*.frag
+            ${CMAKE_CURRENT_SOURCE_DIR}/*.tesc
+            ${CMAKE_CURRENT_SOURCE_DIR}/*.tese
             ${CMAKE_CURRENT_SOURCE_DIR}/*.comp
             ${CMAKE_CURRENT_SOURCE_DIR}/*.geom
             ${CMAKE_CURRENT_SOURCE_DIR}/*.rgen

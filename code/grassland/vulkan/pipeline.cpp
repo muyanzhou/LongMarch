@@ -134,6 +134,10 @@ void PipelineSettings::SetCullMode(VkCullModeFlags cull_mode) {
   rasterization_state_create_info.cullMode = cull_mode;
 }
 
+void PipelineSettings::SetPolygonMode(VkPolygonMode polygon_mode) {
+  rasterization_state_create_info.polygonMode = polygon_mode;
+}
+
 void PipelineSettings::SetSubpass(int subpass) {
   this->subpass = subpass;
 }
@@ -143,6 +147,15 @@ void PipelineSettings::SetBlendState(
     VkPipelineColorBlendAttachmentState blend_attachment_state) {
   pipeline_color_blend_attachment_states[color_attachment_index] =
       blend_attachment_state;
+}
+
+void PipelineSettings::SetTessellationState(uint32_t patch_control_points) {
+  tessellation_state_create_info = VkPipelineTessellationStateCreateInfo{
+      VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO,
+      nullptr,
+      0,
+      patch_control_points,
+  };
 }
 
 Pipeline::Pipeline(const class Device *device, VkPipeline pipeline)

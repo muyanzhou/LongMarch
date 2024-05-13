@@ -27,6 +27,8 @@ struct PipelineSettings {
 
   void SetCullMode(VkCullModeFlags cull_mode = VK_CULL_MODE_BACK_BIT);
 
+  void SetPolygonMode(VkPolygonMode polygon_mode = VK_POLYGON_MODE_FILL);
+
   void SetSubpass(int subpass);
 
   void SetBlendState(
@@ -42,6 +44,8 @@ struct PipelineSettings {
           VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
               VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
       });
+
+  void SetTessellationState(uint32_t patch_control_points);
 
   // Render pass
   const RenderPass *render_pass;
@@ -74,6 +78,9 @@ struct PipelineSettings {
 
   // Rasterization state
   VkPipelineRasterizationStateCreateInfo rasterization_state_create_info{};
+
+  std::optional<VkPipelineTessellationStateCreateInfo>
+      tessellation_state_create_info;
 
   int subpass{};
 };
