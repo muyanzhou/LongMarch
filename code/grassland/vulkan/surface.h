@@ -11,11 +11,11 @@ class Surface {
 
   ~Surface();
 
-  [[nodiscard]] VkSurfaceKHR Handle() const;
+  VkSurfaceKHR Handle() const;
 
-  [[nodiscard]] GLFWwindow *Window() const;
+  GLFWwindow *Window() const;
 
-  [[nodiscard]] const class Instance *Instance() const;
+  const class Instance *Instance() const;
 
  private:
   const class Instance *instance_{};

@@ -8,11 +8,11 @@ class Sampler {
 
   ~Sampler();
 
-  [[nodiscard]] VkSampler Handle() const {
+  VkSampler Handle() const {
     return sampler_;
   }
 
-  [[nodiscard]] const class Device *Device() const {
+  const class Device *Device() const {
     return device_;
   }
 

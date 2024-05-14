@@ -11,23 +11,23 @@ class Buffer {
 
   ~Buffer();
 
-  [[nodiscard]] const class Device *Device() const {
+  const class Device *Device() const {
     return device_;
   }
 
-  [[nodiscard]] VkBuffer Handle() const {
+  VkBuffer Handle() const {
     return buffer_;
   }
 
-  [[nodiscard]] VmaAllocation Allocation() const {
+  VmaAllocation Allocation() const {
     return allocation_;
   }
 
-  [[nodiscard]] VkDeviceSize Size() const {
+  VkDeviceSize Size() const {
     return size_;
   }
 
-  [[nodiscard]] void *Map() const {
+  void *Map() const {
     void *data;
     vmaMapMemory(device_->Allocator(), allocation_, &data);
     return data;

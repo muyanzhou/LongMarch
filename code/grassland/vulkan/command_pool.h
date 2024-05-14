@@ -9,11 +9,11 @@ class CommandPool {
 
   ~CommandPool();
 
-  [[nodiscard]] VkCommandPool Handle() const {
+  VkCommandPool Handle() const {
     return command_pool_;
   }
 
-  [[nodiscard]] const class Device *Device() const {
+  const class Device *Device() const {
     return device_;
   }
 

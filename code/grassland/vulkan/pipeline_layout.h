@@ -8,11 +8,11 @@ class PipelineLayout {
 
   ~PipelineLayout();
 
-  [[nodiscard]] const class Device *Device() const {
+  const class Device *Device() const {
     return device_;
   }
 
-  [[nodiscard]] VkPipelineLayout Handle() const {
+  VkPipelineLayout Handle() const {
     return pipeline_layout_;
   }
 

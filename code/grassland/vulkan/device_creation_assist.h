@@ -15,7 +15,7 @@ struct DeviceFeatureRequirement {
   int num_transfer_queue{1};
   int num_compute_queue{0};
 
-  [[nodiscard]] class DeviceCreateInfo GenerateRecommendedDeviceCreateInfo(
+  class DeviceCreateInfo GenerateRecommendedDeviceCreateInfo(
       const PhysicalDevice &physical_device) const;
 };
 
@@ -36,8 +36,7 @@ struct DeviceFeatureContainer : public DeviceFeatureContainerBase {
     return reinterpret_cast<void *>(&feature);
   }
 
-  [[nodiscard]] std::unique_ptr<DeviceFeatureContainerBase> Duplicate()
-      const override {
+  std::unique_ptr<DeviceFeatureContainerBase> Duplicate() const override {
     return std::make_unique<DeviceFeatureContainer<FeatureType>>(feature);
   }
 };

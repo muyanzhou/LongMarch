@@ -46,8 +46,11 @@ struct DescriptorPoolSize {
     return pool_size * multiplier;
   }
 
-  [[nodiscard]] std::vector<VkDescriptorPoolSize> ToVkDescriptorPoolSize()
-      const {
+  std::vector<VkDescriptorPoolSize> ToVkDescriptorPoolSize() const {
+    return *this;
+  }
+
+  operator std::vector<VkDescriptorPoolSize>() const {
     std::vector<VkDescriptorPoolSize> pool_sizes;
     pool_sizes.reserve(descriptor_type_count.size());
     for (auto &[type, count] : descriptor_type_count) {
@@ -65,11 +68,11 @@ class DescriptorPool {
 
   ~DescriptorPool();
 
-  [[nodiscard]] const class Device *Device() const {
+  const class Device *Device() const {
     return device_;
   }
 
-  [[nodiscard]] VkDescriptorPool Handle() const {
+  VkDescriptorPool Handle() const {
     return descriptor_pool_;
   }
 

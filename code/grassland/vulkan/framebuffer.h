@@ -12,15 +12,15 @@ class Framebuffer {
 
   ~Framebuffer();
 
-  [[nodiscard]] VkFramebuffer Handle() const {
+  VkFramebuffer Handle() const {
     return framebuffer_;
   }
 
-  [[nodiscard]] const class RenderPass *RenderPass() const {
+  const class RenderPass *RenderPass() const {
     return render_pass_;
   }
 
-  [[nodiscard]] VkExtent2D Extent() const {
+  VkExtent2D Extent() const {
     return extent_;
   }
 

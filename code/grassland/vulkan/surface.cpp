@@ -13,7 +13,7 @@ Surface::~Surface() {
   vkDestroySurfaceKHR(instance_->Handle(), surface_, nullptr);
 }
 
-[[nodiscard]] VkSurfaceKHR Surface::Handle() const {
+VkSurfaceKHR Surface::Handle() const {
   return surface_;
 }
 

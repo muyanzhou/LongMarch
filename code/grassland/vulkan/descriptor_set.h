@@ -11,11 +11,11 @@ class DescriptorSet {
 
   ~DescriptorSet();
 
-  [[nodiscard]] VkDescriptorSet Handle() const {
+  VkDescriptorSet Handle() const {
     return set_;
   }
 
-  [[nodiscard]] const class DescriptorPool *Pool() const {
+  const class DescriptorPool *Pool() const {
     return descriptor_pool_;
   }
 

@@ -8,16 +8,16 @@ class Queue {
                  uint32_t queue_family_index,
                  VkQueue queue);
 
-  [[nodiscard]] VkQueue Handle() const;
+  VkQueue Handle() const;
 
-  [[nodiscard]] const class Device *Device() const {
+  const class Device *Device() const {
     return device_;
   }
-  [[nodiscard]] uint32_t QueueFamilyIndex() const {
+  uint32_t QueueFamilyIndex() const {
     return queue_family_index_;
   }
 
-  [[nodiscard]] VkResult WaitIdle() const;
+  VkResult WaitIdle() const;
 
  private:
   const class Device *device_{};

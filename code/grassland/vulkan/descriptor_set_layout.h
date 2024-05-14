@@ -12,18 +12,17 @@ class DescriptorSetLayout {
 
   ~DescriptorSetLayout();
 
-  [[nodiscard]] DescriptorPoolSize GetPoolSize() const;
+  DescriptorPoolSize GetPoolSize() const;
 
-  [[nodiscard]] VkDescriptorSetLayout Handle() const {
+  VkDescriptorSetLayout Handle() const {
     return layout_;
   }
 
-  [[nodiscard]] const class Device *Device() const {
+  const class Device *Device() const {
     return device_;
   }
 
-  [[nodiscard]] const std::vector<VkDescriptorSetLayoutBinding> &Bindings()
-      const {
+  const std::vector<VkDescriptorSetLayoutBinding> &Bindings() const {
     return bindings_;
   }
 

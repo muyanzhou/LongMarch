@@ -9,11 +9,11 @@ class ShaderModule {
 
   ~ShaderModule();
 
-  [[nodiscard]] VkShaderModule Handle() const {
+  VkShaderModule Handle() const {
     return shader_module_;
   }
 
-  [[nodiscard]] const class Device *Device() const {
+  const class Device *Device() const {
     return device_;
   }
 

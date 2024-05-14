@@ -42,11 +42,11 @@ class Swapchain {
     return extent_;
   }
 
-  [[nodiscard]] const std::vector<VkImage> &Images() const {
+  const std::vector<VkImage> &Images() const {
     return images_;
   }
 
-  [[nodiscard]] const std::vector<VkImageView> &ImageViews() const {
+  const std::vector<VkImageView> &ImageViews() const {
     return image_views_;
   }
 

@@ -30,30 +30,26 @@ struct SubpassSettings {
           {},
       const std::vector<uint32_t> &preserve_attachment_references = {});
 
-  [[nodiscard]] VkSubpassDescription Description() const;
+  VkSubpassDescription Description() const;
 
-  [[nodiscard]] const std::vector<VkAttachmentReference>
-      &InputAttachmentReferences() const {
+  const std::vector<VkAttachmentReference> &InputAttachmentReferences() const {
     return input_attachment_references;
   }
 
-  [[nodiscard]] const std::vector<VkAttachmentReference>
-      &ColorAttachmentReferences() const {
+  const std::vector<VkAttachmentReference> &ColorAttachmentReferences() const {
     return color_attachment_references;
   }
 
-  [[nodiscard]] const std::optional<VkAttachmentReference>
-      &DepthAttachmentReference() const {
+  const std::optional<VkAttachmentReference> &DepthAttachmentReference() const {
     return depth_attachment_reference;
   }
 
-  [[nodiscard]] const std::vector<VkAttachmentReference>
-      &ResolveAttachmentReferences() const {
+  const std::vector<VkAttachmentReference> &ResolveAttachmentReferences()
+      const {
     return resolve_attachment_references;
   }
 
-  [[nodiscard]] const std::vector<uint32_t> &PreserveAttachmentReferences()
-      const {
+  const std::vector<uint32_t> &PreserveAttachmentReferences() const {
     return preserve_attachment_references;
   }
 };
@@ -67,28 +63,25 @@ class RenderPass {
 
   ~RenderPass();
 
-  [[nodiscard]] const class Device *Device() const {
+  const class Device *Device() const {
     return device_;
   }
 
-  [[nodiscard]] VkRenderPass Handle() const {
+  VkRenderPass Handle() const {
     return render_pass_;
   }
 
-  [[nodiscard]] const std::vector<VkAttachmentDescription>
-      &AttachmentDescriptions() const {
+  const std::vector<VkAttachmentDescription> &AttachmentDescriptions() const {
     return attachment_descriptions_;
   }
 
-  [[nodiscard]] const std::vector<struct SubpassSettings> &SubpassSettings()
-      const {
+  const std::vector<struct SubpassSettings> &SubpassSettings() const {
     return subpass_settings_;
   }
 
-  [[nodiscard]] VkResult CreateFramebuffer(
-      const std::vector<VkImageView> &image_views,
-      VkExtent2D extent,
-      double_ptr<Framebuffer> pp_framebuffer) const;
+  VkResult CreateFramebuffer(const std::vector<VkImageView> &image_views,
+                             VkExtent2D extent,
+                             double_ptr<Framebuffer> pp_framebuffer) const;
 
  private:
   const class Device *device_{};

@@ -38,21 +38,20 @@ class Instance {
     return instance_;
   }
 
-  [[nodiscard]] VkInstance Handle() const {
+  VkInstance Handle() const {
     return instance_;
   }
 
-  [[nodiscard]] const InstanceCreateHint &CreateHint() const {
+  const InstanceCreateHint &CreateHint() const {
     return create_hint_;
   }
 
   VkResult CreateSurfaceFromGLFWWindow(GLFWwindow *window,
                                        double_ptr<Surface> pp_surface) const;
 
-  [[nodiscard]] std::vector<class PhysicalDevice> EnumeratePhysicalDevices()
-      const;
+  std::vector<class PhysicalDevice> EnumeratePhysicalDevices() const;
 
-  [[nodiscard]] VkResult CreateDevice(
+  VkResult CreateDevice(
       const PhysicalDevice &physical_device,
       const struct DeviceFeatureRequirement &device_feature_requirement,
       struct DeviceCreateInfo create_info,
@@ -63,7 +62,7 @@ class Instance {
                         int device_index,
                         double_ptr<struct Device> pp_device) const;
 
-  [[nodiscard]] VkResult CreateDevice(
+  VkResult CreateDevice(
       const struct DeviceFeatureRequirement &device_feature_requirement,
       int device_index,
       double_ptr<struct Device> pp_device) const;
@@ -72,7 +71,7 @@ class Instance {
                         bool enable_raytracing_extension,
                         double_ptr<struct Device> pp_device) const;
 
-  [[nodiscard]] VkResult CreateDevice(
+  VkResult CreateDevice(
       const struct DeviceFeatureRequirement &device_feature_requirement,
       double_ptr<struct Device> pp_device) const;
 

@@ -10,11 +10,11 @@ class Semaphore {
 
   ~Semaphore();
 
-  [[nodiscard]] VkSemaphore Handle() const {
+  VkSemaphore Handle() const {
     return semaphore_;
   }
 
-  [[nodiscard]] const class Device *Device() const {
+  const class Device *Device() const {
     return device_;
   }
 

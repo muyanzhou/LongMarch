@@ -91,11 +91,11 @@ class Pipeline {
 
   ~Pipeline();
 
-  [[nodiscard]] VkPipeline Handle() const {
+  VkPipeline Handle() const {
     return pipeline_;
   }
 
-  [[nodiscard]] const class Device *Device() const {
+  const class Device *Device() const {
     return device_;
   }
 

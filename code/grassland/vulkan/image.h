@@ -16,35 +16,35 @@ class Image {
         VmaAllocation allocation);
   ~Image();
 
-  [[nodiscard]] const class Device *Device() const {
+  const class Device *Device() const {
     return device_;
   }
 
-  [[nodiscard]] VkImage Handle() const {
+  VkImage Handle() const {
     return image_;
   }
 
-  [[nodiscard]] VkImageView ImageView() const {
+  VkImageView ImageView() const {
     return image_view_;
   }
 
-  [[nodiscard]] VkFormat Format() const {
+  VkFormat Format() const {
     return format_;
   }
 
-  [[nodiscard]] VkExtent2D Extent() const {
+  VkExtent2D Extent() const {
     return extent_;
   }
 
-  [[nodiscard]] VkImageUsageFlags Usage() const {
+  VkImageUsageFlags Usage() const {
     return usage_;
   }
 
-  [[nodiscard]] VkImageAspectFlags Aspect() const {
+  VkImageAspectFlags Aspect() const {
     return aspect_;
   }
 
-  [[nodiscard]] VkSampleCountFlagBits SampleCount() const {
+  VkSampleCountFlagBits SampleCount() const {
     return sample_count_;
   }
 

@@ -10,11 +10,11 @@ class CommandBuffer {
 
   ~CommandBuffer();
 
-  [[nodiscard]] VkCommandBuffer Handle() const {
+  VkCommandBuffer Handle() const {
     return command_buffer_;
   }
 
-  [[nodiscard]] const class CommandPool *CommandPool() const {
+  const class CommandPool *CommandPool() const {
     return command_pool_;
   }
 

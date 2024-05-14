@@ -9,11 +9,11 @@ class Fence {
 
   ~Fence();
 
-  [[nodiscard]] VkFence Handle() const {
+  VkFence Handle() const {
     return fence_;
   }
 
-  [[nodiscard]] const class Device *Device() const {
+  const class Device *Device() const {
     return device_;
   }
 
