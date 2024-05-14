@@ -12,7 +12,18 @@ endif ()
 project(LongMarch)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CUDA_STANDARD 17)
+
+find_package(CUDAToolkit)
+
+if (CUDAToolkit_FOUND)
+    enable_language(CUDA)
+    set(CMAKE_CUDA_STANDARD 17)
+    set(LONGMARCH_CUDA_ENABLED ON)
+#    set_target_properties(my_cuda_app PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+#    set_target_properties(my_cuda_app PROPERTIES CUDA_ARCHITECTURES "60;70;75")
+else ()
+    message(STATUS "CUDA not found, skipping CUDA code.")
+endif ()
 
 find_package(fmt CONFIG REQUIRED)
 set(FMT_LIB_NAME fmt::fmt-header-only) # fmt::fmt is also available
