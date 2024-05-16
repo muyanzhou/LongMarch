@@ -127,7 +127,8 @@ __global__ void TestRandomAccessThroughputKernel(
   }
   MemoryBlock<block_size> sum{};
   curandState state{};
-  curand_init(0, idx, 0, &state);
+  //  curand_init(0, idx, 0, &state);
+  curand_init(0, blockIdx.x, 0, &state);
 
 #pragma unroll
   for (int i = 0; i < num_access; i++) {
@@ -199,6 +200,8 @@ __global__ void TestSequentialAccessThroughputKernel(
   curandState state{};
   curand_init(0, idx, 0, &state);
   uint32_t idy = curand(&state) % num_elements;
+  curand_init(0, blockIdx.x, 0, &state);
+  uint32_t idz = curand(&state) % num_elements;
 
 #pragma unroll
   for (int i = 0; i < num_access; i++) {
