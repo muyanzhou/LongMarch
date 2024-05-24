@@ -188,12 +188,6 @@ void grassland::vulkan::Core::OutputFrame(grassland::vulkan::Image *image) {
       VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
       VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
       VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
-  TransitImageLayout(command_buffers_[current_frame_]->Handle(),
-                     image->Handle(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                     VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                     VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_SHADER_READ_BIT,
-                     VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
 
   VkImageBlit blit{};
   blit.srcOffsets[0] = {0, 0, 0};
@@ -221,12 +215,6 @@ void grassland::vulkan::Core::OutputFrame(grassland::vulkan::Image *image) {
       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
       VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
       VK_ACCESS_TRANSFER_WRITE_BIT, 0, VK_IMAGE_ASPECT_COLOR_BIT);
-  TransitImageLayout(
-      command_buffers_[current_frame_]->Handle(), image->Handle(),
-      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
-      VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_TRANSFER_READ_BIT,
-      VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 VkResult grassland::vulkan::Core::CreateBottomLevelAccelerationStructure(

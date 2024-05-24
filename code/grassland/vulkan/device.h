@@ -185,6 +185,16 @@ class Device {
       Queue *queue,
       double_ptr<AccelerationStructure> pp_tlas);
 
+  VkResult CreateRayTracingPipeline(PipelineLayout *pipeline_layout,
+                                    ShaderModule *ray_gen_shader,
+                                    ShaderModule *miss_shader,
+                                    ShaderModule *closest_hit_shader,
+                                    double_ptr<Pipeline> pp_pipeline) const;
+
+  VkResult CreateShaderBindingTable(
+      Pipeline *ray_tracing_pipeline,
+      double_ptr<ShaderBindingTable> pp_sbt) const;
+
  private:
   const class Instance *instance_{};
 

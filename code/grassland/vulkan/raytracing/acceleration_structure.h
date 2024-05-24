@@ -12,6 +12,9 @@ class AccelerationStructure {
   ~AccelerationStructure();
   class Buffer *Buffer() const;
   VkDeviceAddress DeviceAddress() const;
+  VkAccelerationStructureKHR Handle() const {
+    return as_;
+  }
 
  private:
   const class Device *device_{};

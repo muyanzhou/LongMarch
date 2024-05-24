@@ -66,6 +66,18 @@ std::vector<VkQueueFamilyProperties> PhysicalDevice::GetQueueFamilyProperties()
   return queue_families;
 }
 
+VkPhysicalDeviceRayTracingPipelinePropertiesKHR
+PhysicalDevice::GetRayTracingProperties() const {
+  VkPhysicalDeviceRayTracingPipelinePropertiesKHR ray_tracing_properties{};
+  VkPhysicalDeviceProperties2 properties2{};
+  properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+  properties2.pNext = &ray_tracing_properties;
+  ray_tracing_properties.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
+  vkGetPhysicalDeviceProperties2(physical_device_, &properties2);
+  return ray_tracing_properties;
+}
+
 bool PhysicalDevice::IsExtensionSupported(const char *extension_name) const {
   std::vector<VkExtensionProperties> extensions = GetDeviceExtensions();
   for (const auto &extension : extensions) {

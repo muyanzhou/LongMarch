@@ -5,6 +5,11 @@
 
 using namespace long_march;
 
+struct CameraObject {
+  glm::mat4 screen_to_camera;
+  glm::mat4 camera_to_world;
+};
+
 class RayTracingApp {
  public:
   RayTracingApp();
@@ -20,10 +25,12 @@ class RayTracingApp {
   void CreateCoreObjects();
   void CreateFrameAssets();
   void CreateObjectAssets();
+  void CreateRayTracingPipeline();
 
   void DestroyCoreObjects();
   void DestroyFrameAssets();
   void DestroyObjectAssets();
+  void DestroyRayTracingPipeline();
 
   GLFWwindow *window_;
 
@@ -36,4 +43,17 @@ class RayTracingApp {
   std::unique_ptr<vulkan::Buffer> buffer_;
   std::unique_ptr<vulkan::AccelerationStructure> blas_;
   std::unique_ptr<vulkan::AccelerationStructure> tlas_;
+
+  std::unique_ptr<vulkan::DescriptorSetLayout> descriptor_set_layout_;
+  std::unique_ptr<vulkan::StaticBuffer<CameraObject>> camera_object_buffer_;
+
+  std::unique_ptr<vulkan::DescriptorPool> descriptor_pool_;
+  std::unique_ptr<vulkan::DescriptorSet> descriptor_set_;
+
+  std::unique_ptr<vulkan::ShaderModule> raygen_shader_;
+  std::unique_ptr<vulkan::ShaderModule> miss_shader_;
+  std::unique_ptr<vulkan::ShaderModule> hit_shader_;
+  std::unique_ptr<vulkan::PipelineLayout> pipeline_layout_;
+  std::unique_ptr<vulkan::Pipeline> pipeline_;
+  std::unique_ptr<vulkan::ShaderBindingTable> sbt_;
 };

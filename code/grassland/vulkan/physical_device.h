@@ -32,6 +32,9 @@ class PhysicalDevice {
 
   std::vector<VkQueueFamilyProperties> GetQueueFamilyProperties() const;
 
+  VkPhysicalDeviceRayTracingPipelinePropertiesKHR GetRayTracingProperties()
+      const;
+
   bool IsExtensionSupported(const char *extension_name) const;
 
   bool SupportGeometryShader() const;
