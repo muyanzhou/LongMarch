@@ -27,8 +27,7 @@ Image::~Image() {
 }
 
 void Image::ClearColor(VkCommandBuffer command_buffer,
-                       VkClearColorValue clear_color,
-                       VkImageLayout layout) {
+                       VkClearColorValue clear_color) {
   VkImageSubresourceRange subresource_range{};
   subresource_range.aspectMask = aspect_;
   subresource_range.baseMipLevel = 0;
@@ -44,11 +43,6 @@ void Image::ClearColor(VkCommandBuffer command_buffer,
   vkCmdClearColorImage(command_buffer, image_,
                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clear_color, 1,
                        &subresource_range);
-
-  TransitImageLayout(
-      command_buffer, image_, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, layout,
-      VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-      VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, aspect_);
 }
 
 void TransitImageLayout(VkCommandBuffer command_buffer,

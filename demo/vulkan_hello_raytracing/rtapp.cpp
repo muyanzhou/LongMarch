@@ -58,13 +58,29 @@ void RayTracingApp::OnClose() {
 }
 
 void RayTracingApp::OnUpdate() {
+  static float theta = 0.0f;
+  theta += glm::radians(0.1f);
+
+  tlas_->UpdateInstances(
+      std::vector<
+          std::pair<grassland::vulkan::AccelerationStructure *, glm::mat4>>{
+          {blas_.get(),
+           glm::rotate(glm::mat4{1.0f}, theta, glm::vec3{0.0f, 1.0f, 0.0f})}},
+      core_->GraphicsCommandPool(), core_->GraphicsQueue());
 }
 
 void RayTracingApp::OnRender() {
   core_->BeginFrame();
   frame_image_->ClearColor(core_->CommandBuffer()->Handle(),
-                           {0.6f, 0.7f, 0.8f, 1.0f}, VK_IMAGE_LAYOUT_GENERAL);
+                           {0.6f, 0.7f, 0.8f, 1.0f});
   VkCommandBuffer command_buffer = core_->CommandBuffer()->Handle();
+  vulkan::TransitImageLayout(
+      command_buffer, frame_image_->Handle(),
+      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
+      VK_PIPELINE_STAGE_TRANSFER_BIT,
+      VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+      VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_WRITE_BIT,
+      VK_IMAGE_ASPECT_COLOR_BIT);
 
   vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
                     pipeline_->Handle());
@@ -111,9 +127,8 @@ void RayTracingApp::OnRender() {
   vulkan::TransitImageLayout(
       command_buffer, frame_image_->Handle(), VK_IMAGE_LAYOUT_GENERAL,
       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-      VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-      VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_SHADER_WRITE_BIT,
-      VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+      VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+      VK_ACCESS_NONE, VK_ACCESS_TRANSFER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
 
   core_->OutputFrame(frame_image_.get());
   core_->EndFrame();
@@ -158,8 +173,15 @@ void RayTracingApp::CreateObjectAssets() {
   core_->CreateBottomLevelAccelerationStructure(vertex_buffer_->GetBuffer(),
                                                 index_buffer_->GetBuffer(),
                                                 sizeof(glm::vec3), &blas_);
-  core_->CreateTopLevelAccelerationStructure({{blas_.get(), glm::mat4{1.0f}}},
-                                             &tlas_);
+
+  static float theta = glm::radians(0.0f);
+  //  theta += glm::radians(0.1f);
+
+  core_->CreateTopLevelAccelerationStructure(
+      {{blas_.get(),
+        // glm::mat4{1.0f}
+        glm::rotate(glm::mat4{1.0f}, theta, glm::vec3{0.0f, 1.0f, 0.0f})}},
+      &tlas_);
 
   core_->Device()->CreateDescriptorSetLayout(
       {{0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1,

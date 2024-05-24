@@ -16,6 +16,11 @@ class AccelerationStructure {
     return as_;
   }
 
+  VkResult UpdateInstances(
+      const std::vector<std::pair<AccelerationStructure *, glm::mat4>> &objects,
+      CommandPool *command_pool,
+      Queue *queue);
+
  private:
   const class Device *device_{};
   std::unique_ptr<class Buffer> buffer_;

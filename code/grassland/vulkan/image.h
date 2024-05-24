@@ -56,10 +56,8 @@ class Image {
     return sample_count_;
   }
 
-  void ClearColor(
-      VkCommandBuffer command_buffer,
-      VkClearColorValue clear_color,
-      VkImageLayout layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+  void ClearColor(VkCommandBuffer command_buffer,
+                  VkClearColorValue clear_color);
 
  private:
   const class Device *device_{};
