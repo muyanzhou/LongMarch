@@ -70,7 +70,7 @@ DeviceFeatureRequirement::GenerateRecommendedDeviceCreateInfo(
     create_info.AddExtension(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
     create_info.AddExtension(VK_KHR_RAY_QUERY_EXTENSION_NAME);
 
-    VkPhysicalDeviceBufferDeviceAddressFeaturesEXT
+    VkPhysicalDeviceBufferDeviceAddressFeatures
         physical_device_buffer_device_address_features{};
     VkPhysicalDeviceRayTracingPipelineFeaturesKHR
         physical_device_ray_tracing_pipeline_features{};
@@ -79,7 +79,7 @@ DeviceFeatureRequirement::GenerateRecommendedDeviceCreateInfo(
     VkPhysicalDeviceRayQueryFeaturesKHR physical_device_ray_query_features{};
 
     physical_device_buffer_device_address_features.sType =
-        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT;
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
     physical_device_buffer_device_address_features.bufferDeviceAddress =
         VK_TRUE;
 
@@ -147,5 +147,14 @@ DeviceFeatureRequirement::GenerateRecommendedDeviceCreateInfo(
   }
 
   return create_info;
+}
+
+VmaAllocatorCreateFlags DeviceFeatureRequirement::GetVmaAllocatorCreateFlags()
+    const {
+  VmaAllocatorCreateFlags flags = 0;
+  if (enable_raytracing_extension) {
+    flags |= VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
+  }
+  return flags;
 }
 }  // namespace grassland::vulkan

@@ -15,6 +15,7 @@
 #include "grassland/vulkan/pipeline.h"
 #include "grassland/vulkan/pipeline_layout.h"
 #include "grassland/vulkan/queue.h"
+#include "grassland/vulkan/raytracing/raytracing.h"
 #include "grassland/vulkan/render_pass.h"
 #include "grassland/vulkan/sampler.h"
 #include "grassland/vulkan/semaphore.h"

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "glm/glm.hpp"
 #include "grassland/vulkan/device_creation_assist.h"
 #include "grassland/vulkan/device_procedures.h"
 #include "grassland/vulkan/instance.h"
@@ -12,6 +13,7 @@ class Device {
   Device(const class Instance *instance,
          const class PhysicalDevice &physical_device,
          DeviceCreateInfo create_info,
+         VmaAllocatorCreateFlags allocator_flags,
          VkDevice device);
 
   ~Device();
@@ -158,6 +160,30 @@ class Device {
 
   VkResult CreatePipeline(struct PipelineSettings settings,
                           double_ptr<Pipeline> pp_pipeline) const;
+
+  VkResult CreateBottomLevelAccelerationStructure(
+      VkDeviceAddress vertex_buffer_address,
+      VkDeviceAddress index_buffer_address,
+      uint32_t num_vertex,
+      VkDeviceSize stride,
+      uint32_t primitive_count,
+      CommandPool *command_pool,
+      Queue *queue,
+      double_ptr<AccelerationStructure> pp_blas);
+
+  VkResult CreateBottomLevelAccelerationStructure(
+      Buffer *vertex_buffer,
+      Buffer *index_buffer,
+      VkDeviceSize stride,
+      CommandPool *command_pool,
+      Queue *queue,
+      double_ptr<AccelerationStructure> pp_blas);
+
+  VkResult CreateTopLevelAccelerationStructure(
+      const std::vector<std::pair<AccelerationStructure *, glm::mat4>> &objects,
+      CommandPool *command_pool,
+      Queue *queue,
+      double_ptr<AccelerationStructure> pp_tlas);
 
  private:
   const class Instance *instance_{};

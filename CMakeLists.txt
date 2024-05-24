@@ -53,6 +53,10 @@ find_package(glslang CONFIG REQUIRED)
 set(GLSLANG_LIB_NAME glslang::OSDependent glslang::glslang glslang::MachineIndependent glslang::GenericCodeGen glslang::glslang-default-resource-limits glslang::SPVRemapper glslang::SPIRV) # glslang::OGLCompiler glslang::HLSL
 list(APPEND LIB_LIST ${GLSLANG_LIB_NAME})
 
+find_package(glm CONFIG REQUIRED)
+set(GLM_LIB_NAME glm::glm)
+list(APPEND LIB_LIST ${GLM_LIB_NAME})
+
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 include(scripts/pack_shaders.cmake)

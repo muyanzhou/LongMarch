@@ -94,5 +94,8 @@ class Semaphore;
 class Buffer;
 class Image;
 class Sampler;
+class AccelerationStructure;
+class RayTracingPipeline;
+class ShaderBindingTable;
 
 }  // namespace grassland::vulkan

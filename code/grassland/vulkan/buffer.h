@@ -37,6 +37,8 @@ class Buffer {
     vmaUnmapMemory(device_->Allocator(), allocation_);
   }
 
+  VkDeviceAddress GetDeviceAddress() const;
+
  private:
   const class Device *device_{};
   VkDeviceSize size_{};
@@ -60,4 +62,9 @@ void DownloadBuffer(Queue *queue,
                     Buffer *buffer,
                     void *data,
                     VkDeviceSize size);
+
+class BufferObject {
+ public:
+  virtual Buffer *GetBuffer(int frame_index) const = 0;
+};
 }  // namespace grassland::vulkan

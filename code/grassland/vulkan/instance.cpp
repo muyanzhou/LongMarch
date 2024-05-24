@@ -260,7 +260,9 @@ VkResult Instance::CreateDevice(
                       "failed to create logical device.");
 
   if (pp_device) {
-    pp_device.construct(this, physical_device, create_info, device);
+    pp_device.construct(this, physical_device, create_info,
+                        device_feature_requirement.GetVmaAllocatorCreateFlags(),
+                        device);
   } else {
     vkDestroyDevice(device, nullptr);
     SetErrorMessage("pp_device is nullptr.");

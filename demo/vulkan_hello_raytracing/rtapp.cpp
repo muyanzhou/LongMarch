@@ -40,9 +40,11 @@ void RayTracingApp::Run() {
 void RayTracingApp::OnInit() {
   CreateCoreObjects();
   CreateFrameAssets();
+  CreateObjectAssets();
 }
 
 void RayTracingApp::OnClose() {
+  DestroyObjectAssets();
   DestroyFrameAssets();
   DestroyCoreObjects();
 }
@@ -76,4 +78,34 @@ void RayTracingApp::CreateFrameAssets() {
 
 void RayTracingApp::DestroyFrameAssets() {
   frame_image_.reset();
+}
+
+void RayTracingApp::CreateObjectAssets() {
+  std::vector<glm::vec3> vertices = {
+      {1.0f, 1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f}, {0.0f, -1.0f, 0.0f}};
+  std::vector<uint32_t> indices = {0, 1, 2};
+  core_->CreateStaticBuffer<glm::vec3>(
+      vertices.size(),
+      VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
+          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+      &vertex_buffer_);
+  core_->CreateStaticBuffer<uint32_t>(
+      indices.size(),
+      VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
+          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+      &index_buffer_);
+  vertex_buffer_->UploadContents(vertices.data(), vertices.size());
+  index_buffer_->UploadContents(indices.data(), indices.size());
+  core_->CreateBottomLevelAccelerationStructure(vertex_buffer_->GetBuffer(),
+                                                index_buffer_->GetBuffer(),
+                                                sizeof(glm::vec3), &blas_);
+  core_->CreateTopLevelAccelerationStructure({{blas_.get(), glm::mat4{1.0f}}},
+                                             &tlas_);
+}
+
+void RayTracingApp::DestroyObjectAssets() {
+  tlas_.reset();
+  blas_.reset();
+  vertex_buffer_.reset();
+  index_buffer_.reset();
 }

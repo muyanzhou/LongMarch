@@ -4,6 +4,7 @@
   "description": "This road I'm taking is long and hard, but I must keep moving forward. No turning back.",
   "dependencies": [
     "eigen3",
+    "glm",
     "glfw3",
     "fmt",
     "spdlog",

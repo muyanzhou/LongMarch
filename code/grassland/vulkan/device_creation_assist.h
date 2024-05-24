@@ -17,6 +17,8 @@ struct DeviceFeatureRequirement {
 
   class DeviceCreateInfo GenerateRecommendedDeviceCreateInfo(
       const PhysicalDevice &physical_device) const;
+
+  VmaAllocatorCreateFlags GetVmaAllocatorCreateFlags() const;
 };
 
 struct DeviceFeatureContainerBase {

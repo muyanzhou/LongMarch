@@ -1,4 +1,4 @@
-#include "grassland/vulkan/core/core.h"
+#include "grassland/vulkan/core/core_object.h"
 
 #include "grassland/vulkan/image.h"
 
@@ -227,4 +227,34 @@ void grassland::vulkan::Core::OutputFrame(grassland::vulkan::Image *image) {
       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
       VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_TRANSFER_READ_BIT,
       VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+}
+
+VkResult grassland::vulkan::Core::CreateBottomLevelAccelerationStructure(
+    VkDeviceAddress vertex_buffer_address,
+    VkDeviceAddress index_buffer_address,
+    uint32_t num_vertex,
+    VkDeviceSize stride,
+    uint32_t primitive_count,
+    grassland::double_ptr<grassland::vulkan::AccelerationStructure> pp_blas) {
+  return device_->CreateBottomLevelAccelerationStructure(
+      vertex_buffer_address, index_buffer_address, num_vertex, stride,
+      primitive_count, graphics_command_pool_.get(), graphics_queue_.get(),
+      pp_blas);
+}
+
+VkResult grassland::vulkan::Core::CreateBottomLevelAccelerationStructure(
+    grassland::vulkan::Buffer *vertex_buffer,
+    grassland::vulkan::Buffer *index_buffer,
+    VkDeviceSize stride,
+    grassland::double_ptr<grassland::vulkan::AccelerationStructure> pp_blas) {
+  return device_->CreateBottomLevelAccelerationStructure(
+      vertex_buffer, index_buffer, stride, graphics_command_pool_.get(),
+      graphics_queue_.get(), pp_blas);
+}
+
+VkResult grassland::vulkan::Core::CreateTopLevelAccelerationStructure(
+    const std::vector<std::pair<AccelerationStructure *, glm::mat4>> &objects,
+    grassland::double_ptr<grassland::vulkan::AccelerationStructure> pp_tlas) {
+  return device_->CreateTopLevelAccelerationStructure(
+      objects, graphics_command_pool_.get(), graphics_queue_.get(), pp_tlas);
 }
