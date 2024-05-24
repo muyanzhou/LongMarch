@@ -22,6 +22,7 @@ struct InstanceCreateHint {
 
   void AddExtension(const char *extension);
 
+ private:
   void ApplyGLFWSurfaceSupport();
 };
 

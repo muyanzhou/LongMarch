@@ -36,6 +36,14 @@ class Image {
     return extent_;
   }
 
+  uint32_t Width() const {
+    return extent_.width;
+  }
+
+  uint32_t Height() const {
+    return extent_.height;
+  }
+
   VkImageUsageFlags Usage() const {
     return usage_;
   }
@@ -47,6 +55,11 @@ class Image {
   VkSampleCountFlagBits SampleCount() const {
     return sample_count_;
   }
+
+  void ClearColor(
+      VkCommandBuffer command_buffer,
+      VkClearColorValue clear_color,
+      VkImageLayout layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
  private:
   const class Device *device_{};

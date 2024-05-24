@@ -464,19 +464,42 @@ VkResult Device::CreateImage(VkFormat format,
                              VkExtent2D extent,
                              VkImageUsageFlags usage,
                              double_ptr<Image> pp_image) const {
-  return CreateImage(format, extent, usage, VK_IMAGE_ASPECT_COLOR_BIT,
-                     pp_image);
+  VkImageAspectFlagBits aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+  switch (format) {
+    case VK_FORMAT_D16_UNORM:
+    case VK_FORMAT_D32_SFLOAT:
+    case VK_FORMAT_D16_UNORM_S8_UINT:
+    case VK_FORMAT_D24_UNORM_S8_UINT:
+    case VK_FORMAT_D32_SFLOAT_S8_UINT:
+      aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
+    default:
+      break;
+  }
+  return CreateImage(format, extent, usage, aspect, pp_image);
 }
 
 VkResult Device::CreateImage(VkFormat format,
                              VkExtent2D extent,
                              double_ptr<Image> pp_image) const {
-  return CreateImage(
-      format, extent,
+  VkImageUsageFlags usage =
       VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-          VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
-          VK_IMAGE_USAGE_STORAGE_BIT,
-      pp_image);
+      VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
+      VK_IMAGE_USAGE_STORAGE_BIT;
+  switch (format) {
+    case VK_FORMAT_D16_UNORM:
+    case VK_FORMAT_D32_SFLOAT:
+    case VK_FORMAT_D16_UNORM_S8_UINT:
+    case VK_FORMAT_D24_UNORM_S8_UINT:
+    case VK_FORMAT_D32_SFLOAT_S8_UINT:
+      usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
+              VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+              VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
+              VK_IMAGE_USAGE_STORAGE_BIT;
+    default:
+      break;
+  }
+
+  return CreateImage(format, extent, usage, pp_image);
 }
 
 VkResult Device::CreateSampler(VkFilter mag_filter,
