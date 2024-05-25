@@ -59,6 +59,8 @@ class Image {
   void ClearColor(VkCommandBuffer command_buffer,
                   VkClearColorValue clear_color);
 
+  VkResult Resize(VkExtent2D extent);
+
  private:
   const class Device *device_{};
   VkFormat format_{};

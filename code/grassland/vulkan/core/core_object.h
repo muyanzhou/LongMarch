@@ -72,6 +72,9 @@ class Core {
   [[nodiscard]] class CommandBuffer *CommandBuffer() const {
     return command_buffers_[current_frame_].get();
   }
+  [[nodiscard]] const CoreSettings &Settings() const {
+    return settings_;
+  }
 
   template <class Type>
   VkResult CreateStaticBuffer(
@@ -115,7 +118,13 @@ class Core {
 
   void RebuildSwapChain();
 
+  EventManager<void(int, int)> &FrameResizeEvent() {
+    return frame_resize_event_;
+  }
+
  private:
+  void RegisterGLFWWindowEventCallbacks();
+
   CoreSettings settings_;
   std::unique_ptr<class Instance> instance_;
   std::unique_ptr<class Surface> surface_;
@@ -134,5 +143,7 @@ class Core {
   std::vector<std::unique_ptr<class Fence>> in_flight_fences_;
   uint32_t current_frame_{0};
   uint32_t image_index_{0};
+
+  EventManager<void(int, int)> frame_resize_event_;
 };
 }  // namespace grassland::vulkan

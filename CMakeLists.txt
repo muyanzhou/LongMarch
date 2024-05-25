@@ -57,12 +57,18 @@ find_package(glm CONFIG REQUIRED)
 set(GLM_LIB_NAME glm::glm)
 list(APPEND LIB_LIST ${GLM_LIB_NAME})
 
+find_package(imgui CONFIG REQUIRED)
+set(IMGUI_LIB_NAME imgui::imgui)
+list(APPEND LIB_LIST ${IMGUI_LIB_NAME})
+
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 include(scripts/pack_shaders.cmake)
 
 add_subdirectory(code)
 
-add_subdirectory(demo)
-
-add_subdirectory(test)
+# If current list is the root list
+if ("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+    add_subdirectory(demo)
+    add_subdirectory(test)
+endif ()

@@ -48,6 +48,8 @@ grassland::vulkan::Core::Core(const grassland::vulkan::CoreSettings &settings)
       device_->CreateSemaphore(&render_finish_semaphores_[i]);
     }
   }
+
+  RegisterGLFWWindowEventCallbacks();
 }
 
 grassland::vulkan::Core::~Core() {
@@ -245,4 +247,15 @@ VkResult grassland::vulkan::Core::CreateTopLevelAccelerationStructure(
     grassland::double_ptr<grassland::vulkan::AccelerationStructure> pp_tlas) {
   return device_->CreateTopLevelAccelerationStructure(
       objects, graphics_command_pool_.get(), graphics_queue_.get(), pp_tlas);
+}
+
+void grassland::vulkan::Core::RegisterGLFWWindowEventCallbacks() {
+  if (settings_.window) {
+    glfwSetWindowUserPointer(settings_.window, this);
+    glfwSetFramebufferSizeCallback(settings_.window, [](GLFWwindow *window,
+                                                        int width, int height) {
+      auto core = reinterpret_cast<Core *>(glfwGetWindowUserPointer(window));
+      core->frame_resize_event_.InvokeCallbacks(width, height);
+    });
+  }
 }

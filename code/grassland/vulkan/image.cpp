@@ -22,8 +22,10 @@ Image::Image(const class Device *device,
 }
 
 Image::~Image() {
-  vkDestroyImageView(device_->Handle(), image_view_, nullptr);
-  vmaDestroyImage(device_->Allocator(), image_, allocation_);
+  if (image_ || image_view_) {
+    vkDestroyImageView(device_->Handle(), image_view_, nullptr);
+    vmaDestroyImage(device_->Allocator(), image_, allocation_);
+  }
 }
 
 void Image::ClearColor(VkCommandBuffer command_buffer,
@@ -43,6 +45,21 @@ void Image::ClearColor(VkCommandBuffer command_buffer,
   vkCmdClearColorImage(command_buffer, image_,
                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clear_color, 1,
                        &subresource_range);
+}
+
+VkResult Image::Resize(VkExtent2D extent) {
+  vkDestroyImageView(device_->Handle(), image_view_, nullptr);
+  vmaDestroyImage(device_->Allocator(), image_, allocation_);
+
+  Image *new_image = nullptr;
+  RETURN_IF_FAILED_VK(device_->CreateImage(format_, extent, usage_, aspect_,
+                                           sample_count_, &new_image),
+                      "Failed to create resized image.");
+  *this = *new_image;
+  new_image->image_ = VK_NULL_HANDLE;
+  new_image->image_view_ = VK_NULL_HANDLE;
+  delete new_image;
+  return VK_SUCCESS;
 }
 
 void TransitImageLayout(VkCommandBuffer command_buffer,
