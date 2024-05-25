@@ -3,8 +3,8 @@
 #include "grassland/vulkan/descriptor_pool.h"
 #include "grassland/vulkan/framebuffer.h"
 #include "grassland/vulkan/image.h"
-#include "imgui.h"
-#include "imgui_stdlib.h"
+#include "grassland/imgui/imgui_impl_glfw.h"
+#include "grassland/imgui/imgui_impl_vulkan.h"
 
 namespace grassland::vulkan {
 class ImGuiManager {

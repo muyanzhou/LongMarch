@@ -1,8 +1,5 @@
 #include "grassland/vulkan/core/imgui_manager.h"
 
-#include "grassland/imgui/imgui_impl_glfw.h"
-#include "grassland/imgui/imgui_impl_vulkan.h"
-
 namespace grassland::vulkan {
 
 ImGuiManager::ImGuiManager(Core *core,
@@ -54,7 +51,7 @@ ImGuiManager::ImGuiManager(Core *core,
 
   render_pass_->CreateFramebuffer({image_->ImageView()}, image_->Extent(),
                                   &framebuffer_);
-  core_->FrameResizeEvent().RegisterCallback(
+    core_->FrameSizeEvent().RegisterCallback(
       [this](uint32_t width, uint32_t height) {
         render_pass_->CreateFramebuffer({image_->ImageView()}, image_->Extent(),
                                         &framebuffer_);
