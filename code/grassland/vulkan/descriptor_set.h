@@ -19,6 +19,15 @@ class DescriptorSet {
     return descriptor_pool_;
   }
 
+  void BindUniformBuffer(uint32_t binding,
+                         const class Buffer *buffer,
+                         VkDeviceSize offset = 0,
+                         VkDeviceSize range = 0) const;
+
+  void BindCombinedImageSampler(uint32_t binding,
+                                const struct Image *image,
+                                VkSampler sampler = VK_NULL_HANDLE) const;
+
  private:
   const class DescriptorPool *descriptor_pool_{};
   VkDescriptorSet set_{};

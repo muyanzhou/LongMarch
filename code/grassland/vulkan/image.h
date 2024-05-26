@@ -82,4 +82,11 @@ void TransitImageLayout(VkCommandBuffer command_buffer,
                         VkAccessFlags src_access_flags,
                         VkAccessFlags dst_access_flags,
                         VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT);
+
+void UploadImage(Queue *queue,
+                 CommandPool *command_pool,
+                 Image *image,
+                 const void *data,
+                 VkDeviceSize size);
+
 }  // namespace grassland::vulkan
