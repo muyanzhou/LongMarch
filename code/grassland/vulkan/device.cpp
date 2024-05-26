@@ -710,6 +710,12 @@ VkResult Device::CreateBottomLevelAccelerationStructure(
     CommandPool *command_pool,
     Queue *queue,
     double_ptr<AccelerationStructure> pp_blas) {
+  LogInfo(
+      "Vertex Buffer Address: {:#X} Index Buffer Address: {:#X} Num Vertex: {} "
+      "Stride: {} Primitive Count: {}",
+      vertex_buffer_address, index_buffer_address, num_vertex, stride,
+      primitive_count);
+
   const VkBufferUsageFlags buffer_usage_flags =
       VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
       VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
@@ -719,8 +725,10 @@ VkResult Device::CreateBottomLevelAccelerationStructure(
   VkTransformMatrixKHR transform_matrix = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
                                            0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f};
   std::unique_ptr<Buffer> transform_matrix_buffer;
-  CreateBuffer(sizeof(transform_matrix), buffer_usage_flags,
-               VMA_MEMORY_USAGE_CPU_TO_GPU, &transform_matrix_buffer);
+  RETURN_IF_FAILED_VK(
+      CreateBuffer(sizeof(transform_matrix), buffer_usage_flags,
+                   VMA_MEMORY_USAGE_CPU_TO_GPU, &transform_matrix_buffer),
+      "failed to create transform matrix buffer!");
   std::memcpy(transform_matrix_buffer->Map(), &transform_matrix,
               sizeof(transform_matrix));
   transform_matrix_buffer->Unmap();
@@ -779,16 +787,22 @@ VkResult Device::CreateBottomLevelAccelerationStructure(
       &acceleration_structure_build_geometry_info, &primitive_count,
       &acceleration_structure_build_sizes_info);
 
+  LogInfo("Acceleration Structure Size: {} Build Scratch Size: {}",
+          acceleration_structure_build_sizes_info.accelerationStructureSize,
+          acceleration_structure_build_sizes_info.buildScratchSize);
+
   // Create a buffer to hold the acceleration structure
   std::unique_ptr<Buffer> buffer;
-  CreateBuffer(
-      acceleration_structure_build_sizes_info.accelerationStructureSize,
-      VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
-          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-      VMA_MEMORY_USAGE_GPU_ONLY, &buffer);
+  RETURN_IF_FAILED_VK(
+      CreateBuffer(
+          acceleration_structure_build_sizes_info.accelerationStructureSize,
+          VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
+              VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+          VMA_MEMORY_USAGE_GPU_ONLY, &buffer),
+      "failed to create buffer!");
 
   // Create the acceleration structure
-  VkAccelerationStructureKHR acceleration_structure;
+  VkAccelerationStructureKHR acceleration_structure{};
   VkAccelerationStructureCreateInfoKHR acceleration_structure_create_info{};
   acceleration_structure_create_info.sType =
       VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
@@ -797,19 +811,22 @@ VkResult Device::CreateBottomLevelAccelerationStructure(
       acceleration_structure_build_sizes_info.accelerationStructureSize;
   acceleration_structure_create_info.type =
       VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-  procedures_.vkCreateAccelerationStructureKHR(
-      device_, &acceleration_structure_create_info, nullptr,
-      &acceleration_structure);
+  RETURN_IF_FAILED_VK(procedures_.vkCreateAccelerationStructureKHR(
+                          device_, &acceleration_structure_create_info, nullptr,
+                          &acceleration_structure),
+                      "failed to create acceleration structure!");
 
   // The actual build process starts here
 
   // Create a scratch buffer as a temporary storage for the acceleration
   // structure build
   std::unique_ptr<Buffer> scratch_buffer;
-  CreateBuffer(acceleration_structure_build_sizes_info.buildScratchSize,
-               VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
-                   VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-               VMA_MEMORY_USAGE_GPU_ONLY, &scratch_buffer);
+  RETURN_IF_FAILED_VK(
+      CreateBuffer(acceleration_structure_build_sizes_info.buildScratchSize,
+                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+                       VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+                   VMA_MEMORY_USAGE_GPU_ONLY, &scratch_buffer),
+      "failed to create scratch buffer!");
 
   VkAccelerationStructureBuildGeometryInfoKHR
       acceleration_build_geometry_info{};
@@ -830,7 +847,7 @@ VkResult Device::CreateBottomLevelAccelerationStructure(
       scratch_buffer->GetDeviceAddress();
 
   VkAccelerationStructureBuildRangeInfoKHR
-      acceleration_structure_build_range_info;
+      acceleration_structure_build_range_info{};
   acceleration_structure_build_range_info.primitiveCount = primitive_count;
   acceleration_structure_build_range_info.primitiveOffset = 0;
   acceleration_structure_build_range_info.firstVertex = 0;
@@ -845,11 +862,15 @@ VkResult Device::CreateBottomLevelAccelerationStructure(
   // (VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands),
   // but we prefer device builds
 
-  command_pool->SingleTimeCommands(queue, [&](VkCommandBuffer command_buffer) {
-    procedures_.vkCmdBuildAccelerationStructuresKHR(
-        command_buffer, 1, &acceleration_build_geometry_info,
-        acceleration_build_structure_range_infos.data());
-  });
+  RETURN_IF_FAILED_VK(
+      command_pool->SingleTimeCommands(
+          queue,
+          [&](VkCommandBuffer command_buffer) {
+            procedures_.vkCmdBuildAccelerationStructuresKHR(
+                command_buffer, 1, &acceleration_build_geometry_info,
+                acceleration_build_structure_range_infos.data());
+          }),
+      "failed to build acceleration structure!");
 
   VkAccelerationStructureDeviceAddressInfoKHR
       acceleration_device_address_info{};

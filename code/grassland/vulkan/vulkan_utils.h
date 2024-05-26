@@ -63,14 +63,18 @@ void SetErrorMessage(const std::string &message, Args &&...args) {
 
 std::string GetErrorMessage();
 
-#define RETURN_IF_FAILED_VK(cmd, ...) \
-  do {                                \
-    VkResult res = cmd;               \
-    if (res != VK_SUCCESS) {          \
-      SetErrorMessage(__VA_ARGS__);   \
-      return res;                     \
-    }                                 \
-                                      \
+std::string VkResultToString(VkResult result);
+
+#define RETURN_IF_FAILED_VK(cmd, ...)                              \
+  do {                                                             \
+    VkResult res = cmd;                                            \
+    if (res != VK_SUCCESS) {                                       \
+      SetErrorMessage(__VA_ARGS__);                                \
+      SetErrorMessage("VkResult: {}",                              \
+                      ::grassland::vulkan::VkResultToString(res)); \
+      return res;                                                  \
+    }                                                              \
+                                                                   \
   } while (false)
 
 class Instance;
