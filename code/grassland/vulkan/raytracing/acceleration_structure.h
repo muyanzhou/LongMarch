@@ -27,4 +27,17 @@ class AccelerationStructure {
   VkDeviceAddress device_address_{};
   VkAccelerationStructureKHR as_{};
 };
+
+VkResult BuildAccelerationStructure(
+    const Device *device,
+    VkAccelerationStructureGeometryKHR geometry,
+    VkAccelerationStructureTypeKHR type,
+    VkBuildAccelerationStructureFlagsKHR flags,
+    VkBuildAccelerationStructureModeKHR mode,
+    uint32_t primitive_count,
+    CommandPool *command_pool,
+    Queue *queue,
+    VkAccelerationStructureKHR *ptr_acceleration_structure,
+    double_ptr<Buffer> pp_buffer);
+
 }  // namespace grassland::vulkan

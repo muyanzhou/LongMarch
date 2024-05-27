@@ -82,89 +82,14 @@ VkResult AccelerationStructure::UpdateInstances(
   acceleration_structure_geometry.geometry.instances.data =
       instance_data_device_address;
 
-  // Get the size requirements for buffers involved in the acceleration
-  // structure build process
-  VkAccelerationStructureBuildGeometryInfoKHR
-      acceleration_structure_build_geometry_info{};
-  acceleration_structure_build_geometry_info.sType =
-      VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-  acceleration_structure_build_geometry_info.type =
-      VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-  acceleration_structure_build_geometry_info.flags =
-      VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
-  acceleration_structure_build_geometry_info.geometryCount = 1;
-  acceleration_structure_build_geometry_info.pGeometries =
-      &acceleration_structure_geometry;
-
-  const uint32_t primitive_count = acceleration_structure_instances.size();
-
-  VkAccelerationStructureBuildSizesInfoKHR
-      acceleration_structure_build_sizes_info{};
-  acceleration_structure_build_sizes_info.sType =
-      VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
-  device_->Procedures().vkGetAccelerationStructureBuildSizesKHR(
-      device_->Handle(), VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
-      &acceleration_structure_build_geometry_info, &primitive_count,
-      &acceleration_structure_build_sizes_info);
-
-  // The actual build process starts here
-
-  // Create a scratch buffer as a temporary storage for the acceleration
-  // structure build
-  if (acceleration_structure_build_sizes_info.accelerationStructureSize !=
-      buffer_->Size()) {
-    LogError("AS Buffer size not match!");
-  }
-
-  std::unique_ptr<class Buffer> scratch_buffer;
-  device_->CreateBuffer(
-      acceleration_structure_build_sizes_info.buildScratchSize,
-      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
-          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-          VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-      VMA_MEMORY_USAGE_GPU_ONLY, &scratch_buffer);
-
-  VkAccelerationStructureBuildGeometryInfoKHR
-      acceleration_build_geometry_info{};
-  acceleration_build_geometry_info.sType =
-      VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-  acceleration_build_geometry_info.type =
-      VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-  acceleration_build_geometry_info.flags =
+  BuildAccelerationStructure(
+      device_, acceleration_structure_geometry,
+      VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR,
       VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR |
-      VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
-  acceleration_build_geometry_info.mode =
-      VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR;
-  acceleration_build_geometry_info.srcAccelerationStructure = as_;
-  acceleration_build_geometry_info.dstAccelerationStructure = as_;
-  acceleration_build_geometry_info.geometryCount = 1;
-  acceleration_build_geometry_info.pGeometries =
-      &acceleration_structure_geometry;
-  acceleration_build_geometry_info.scratchData.deviceAddress =
-      scratch_buffer->GetDeviceAddress();
-
-  VkAccelerationStructureBuildRangeInfoKHR
-      acceleration_structure_build_range_info;
-  acceleration_structure_build_range_info.primitiveCount = primitive_count;
-  acceleration_structure_build_range_info.primitiveOffset = 0;
-  acceleration_structure_build_range_info.firstVertex = 0;
-  acceleration_structure_build_range_info.transformOffset = 0;
-  std::vector<VkAccelerationStructureBuildRangeInfoKHR *>
-      acceleration_build_structure_range_infos = {
-          &acceleration_structure_build_range_info};
-
-  // Build the acceleration structure on the device via a one-time command
-  // buffer submission Some implementations may support acceleration structure
-  // building on the host
-  // (VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands),
-  // but we prefer device builds
-  command_pool->SingleTimeCommands(queue, [&](VkCommandBuffer command_buffer) {
-    //    vkCmdFillBuffer(command_buffer, scratch_buffer_->Handle(), 0,
-    //                    scratch_buffer_->Size(), 0);
-    device_->Procedures().vkCmdBuildAccelerationStructuresKHR(
-        command_buffer, 1, &acceleration_build_geometry_info,
-        acceleration_build_structure_range_infos.data());
-  });
+          VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR,
+      VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR,
+      acceleration_structure_instances.size(), command_pool, queue, &as_,
+      &buffer_);
 
   // Get the top acceleration structure's handle, which will be used to setup
   // it's descriptor
@@ -180,4 +105,113 @@ VkResult AccelerationStructure::UpdateInstances(
   return VK_SUCCESS;
 }
 
+VkResult BuildAccelerationStructure(
+    const Device *device,
+    VkAccelerationStructureGeometryKHR geometry,
+    VkAccelerationStructureTypeKHR type,
+    VkBuildAccelerationStructureFlagsKHR flags,
+    VkBuildAccelerationStructureModeKHR mode,
+    uint32_t primitive_count,
+    CommandPool *command_pool,
+    Queue *queue,
+    VkAccelerationStructureKHR *ptr_acceleration_structure,
+    double_ptr<Buffer> pp_buffer) {
+  VkAccelerationStructureBuildGeometryInfoKHR build_geometry_info{};
+  build_geometry_info.sType =
+      VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+  build_geometry_info.type = type;
+  build_geometry_info.flags = flags;
+  build_geometry_info.mode = mode;
+  if (mode == VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR &&
+      *ptr_acceleration_structure != VK_NULL_HANDLE) {
+    build_geometry_info.srcAccelerationStructure = *ptr_acceleration_structure;
+    build_geometry_info.dstAccelerationStructure = *ptr_acceleration_structure;
+  }
+  build_geometry_info.geometryCount = 1;
+  build_geometry_info.pGeometries = &geometry;
+
+  VkAccelerationStructureBuildSizesInfoKHR build_sizes_info{};
+  build_sizes_info.sType =
+      VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
+  device->Procedures().vkGetAccelerationStructureBuildSizesKHR(
+      device->Handle(), VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+      &build_geometry_info, &primitive_count, &build_sizes_info);
+
+  if (!(*pp_buffer) ||
+      pp_buffer->Size() != build_sizes_info.accelerationStructureSize) {
+    // Create a buffer to hold the acceleration structure
+    RETURN_IF_FAILED_VK(
+        device->CreateBuffer(
+            build_sizes_info.accelerationStructureSize,
+            VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
+                VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+            VMA_MEMORY_USAGE_GPU_ONLY, pp_buffer),
+        "failed to create buffer!");
+
+    // Create the acceleration structure
+    VkAccelerationStructureCreateInfoKHR create_info{};
+    create_info.sType =
+        VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
+    create_info.buffer = pp_buffer->Handle();
+    create_info.size = build_sizes_info.accelerationStructureSize;
+    create_info.type = type;
+    RETURN_IF_FAILED_VK(device->Procedures().vkCreateAccelerationStructureKHR(
+                            device->Handle(), &create_info, nullptr,
+                            ptr_acceleration_structure),
+                        "failed to create acceleration structure!");
+  }
+
+  // The actual build process starts here
+
+  // Create a scratch buffer as a temporary storage for the acceleration
+  // structure build
+
+  VkPhysicalDeviceAccelerationStructurePropertiesKHR
+      acceleration_structure_properties{};
+  acceleration_structure_properties.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR;
+  VkPhysicalDeviceProperties2 device_properties{};
+  device_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+  device_properties.pNext = &acceleration_structure_properties;
+  vkGetPhysicalDeviceProperties2(device->PhysicalDevice().Handle(),
+                                 &device_properties);
+  VkDeviceSize alignment = acceleration_structure_properties
+                               .minAccelerationStructureScratchOffsetAlignment;
+
+  // minAccelerationStructureScratchOffsetAlignment
+
+  std::unique_ptr<Buffer> scratch_buffer;
+  RETURN_IF_FAILED_VK(
+      device->CreateBuffer(build_sizes_info.buildScratchSize + alignment - 1,
+                           VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+                               VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+                           VMA_MEMORY_USAGE_GPU_ONLY, &scratch_buffer),
+      "failed to create scratch buffer!");
+
+  build_geometry_info.dstAccelerationStructure = *ptr_acceleration_structure;
+  build_geometry_info.scratchData.deviceAddress =
+      (scratch_buffer->GetDeviceAddress() + alignment - 1) & (~(alignment - 1));
+
+  VkAccelerationStructureBuildRangeInfoKHR
+      acceleration_structure_build_range_info{};
+  acceleration_structure_build_range_info.primitiveCount = primitive_count;
+  acceleration_structure_build_range_info.primitiveOffset = 0;
+  acceleration_structure_build_range_info.firstVertex = 0;
+  acceleration_structure_build_range_info.transformOffset = 0;
+  std::vector<VkAccelerationStructureBuildRangeInfoKHR *>
+      acceleration_build_structure_range_infos = {
+          &acceleration_structure_build_range_info};
+
+  RETURN_IF_FAILED_VK(
+      command_pool->SingleTimeCommands(
+          queue,
+          [&](VkCommandBuffer command_buffer) {
+            device->Procedures().vkCmdBuildAccelerationStructuresKHR(
+                command_buffer, 1, &build_geometry_info,
+                acceleration_build_structure_range_infos.data());
+          }),
+      "failed to build acceleration structure!");
+
+  return VK_SUCCESS;
+}
 }  // namespace grassland::vulkan

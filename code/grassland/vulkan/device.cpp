@@ -710,12 +710,6 @@ VkResult Device::CreateBottomLevelAccelerationStructure(
     CommandPool *command_pool,
     Queue *queue,
     double_ptr<AccelerationStructure> pp_blas) {
-  LogInfo(
-      "Vertex Buffer Address: {:#X} Index Buffer Address: {:#X} Num Vertex: {} "
-      "Stride: {} Primitive Count: {}",
-      vertex_buffer_address, index_buffer_address, num_vertex, stride,
-      primitive_count);
-
   const VkBufferUsageFlags buffer_usage_flags =
       VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
       VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
@@ -764,113 +758,15 @@ VkResult Device::CreateBottomLevelAccelerationStructure(
   acceleration_structure_geometry.geometry.triangles.transformData =
       transform_matrix_device_address;
 
-  // Get the size requirements for buffers involved in the acceleration
-  // structure build process
-  VkAccelerationStructureBuildGeometryInfoKHR
-      acceleration_structure_build_geometry_info{};
-  acceleration_structure_build_geometry_info.sType =
-      VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-  acceleration_structure_build_geometry_info.type =
-      VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-  acceleration_structure_build_geometry_info.flags =
-      VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
-  acceleration_structure_build_geometry_info.geometryCount = 1;
-  acceleration_structure_build_geometry_info.pGeometries =
-      &acceleration_structure_geometry;
-
-  VkAccelerationStructureBuildSizesInfoKHR
-      acceleration_structure_build_sizes_info{};
-  acceleration_structure_build_sizes_info.sType =
-      VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
-  procedures_.vkGetAccelerationStructureBuildSizesKHR(
-      device_, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
-      &acceleration_structure_build_geometry_info, &primitive_count,
-      &acceleration_structure_build_sizes_info);
-
-  LogInfo("Acceleration Structure Size: {} Build Scratch Size: {}",
-          acceleration_structure_build_sizes_info.accelerationStructureSize,
-          acceleration_structure_build_sizes_info.buildScratchSize);
-
-  // Create a buffer to hold the acceleration structure
   std::unique_ptr<Buffer> buffer;
-  RETURN_IF_FAILED_VK(
-      CreateBuffer(
-          acceleration_structure_build_sizes_info.accelerationStructureSize,
-          VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
-              VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-          VMA_MEMORY_USAGE_GPU_ONLY, &buffer),
-      "failed to create buffer!");
+  VkAccelerationStructureKHR acceleration_structure;
 
-  // Create the acceleration structure
-  VkAccelerationStructureKHR acceleration_structure{};
-  VkAccelerationStructureCreateInfoKHR acceleration_structure_create_info{};
-  acceleration_structure_create_info.sType =
-      VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
-  acceleration_structure_create_info.buffer = buffer->Handle();
-  acceleration_structure_create_info.size =
-      acceleration_structure_build_sizes_info.accelerationStructureSize;
-  acceleration_structure_create_info.type =
-      VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-  RETURN_IF_FAILED_VK(procedures_.vkCreateAccelerationStructureKHR(
-                          device_, &acceleration_structure_create_info, nullptr,
-                          &acceleration_structure),
-                      "failed to create acceleration structure!");
-
-  // The actual build process starts here
-
-  // Create a scratch buffer as a temporary storage for the acceleration
-  // structure build
-  std::unique_ptr<Buffer> scratch_buffer;
-  RETURN_IF_FAILED_VK(
-      CreateBuffer(acceleration_structure_build_sizes_info.buildScratchSize,
-                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
-                       VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-                   VMA_MEMORY_USAGE_GPU_ONLY, &scratch_buffer),
-      "failed to create scratch buffer!");
-
-  VkAccelerationStructureBuildGeometryInfoKHR
-      acceleration_build_geometry_info{};
-  acceleration_build_geometry_info.sType =
-      VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-  acceleration_build_geometry_info.type =
-      VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-  acceleration_build_geometry_info.flags =
-      VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
-  acceleration_build_geometry_info.mode =
-      VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
-  acceleration_build_geometry_info.dstAccelerationStructure =
-      acceleration_structure;
-  acceleration_build_geometry_info.geometryCount = 1;
-  acceleration_build_geometry_info.pGeometries =
-      &acceleration_structure_geometry;
-  acceleration_build_geometry_info.scratchData.deviceAddress =
-      scratch_buffer->GetDeviceAddress();
-
-  VkAccelerationStructureBuildRangeInfoKHR
-      acceleration_structure_build_range_info{};
-  acceleration_structure_build_range_info.primitiveCount = primitive_count;
-  acceleration_structure_build_range_info.primitiveOffset = 0;
-  acceleration_structure_build_range_info.firstVertex = 0;
-  acceleration_structure_build_range_info.transformOffset = 0;
-  std::vector<VkAccelerationStructureBuildRangeInfoKHR *>
-      acceleration_build_structure_range_infos = {
-          &acceleration_structure_build_range_info};
-
-  // Build the acceleration structure on the device via a one-time command
-  // buffer submission Some implementations may support acceleration structure
-  // building on the host
-  // (VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands),
-  // but we prefer device builds
-
-  RETURN_IF_FAILED_VK(
-      command_pool->SingleTimeCommands(
-          queue,
-          [&](VkCommandBuffer command_buffer) {
-            procedures_.vkCmdBuildAccelerationStructuresKHR(
-                command_buffer, 1, &acceleration_build_geometry_info,
-                acceleration_build_structure_range_infos.data());
-          }),
-      "failed to build acceleration structure!");
+  BuildAccelerationStructure(
+      this, acceleration_structure_geometry,
+      VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR,
+      VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR,
+      VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR, primitive_count,
+      command_pool, queue, &acceleration_structure, &buffer);
 
   VkAccelerationStructureDeviceAddressInfoKHR
       acceleration_device_address_info{};
@@ -896,7 +792,8 @@ VkResult Device::CreateBottomLevelAccelerationStructure(
   return CreateBottomLevelAccelerationStructure(
       vertex_buffer->GetDeviceAddress(), index_buffer->GetDeviceAddress(),
       vertex_buffer->Size() / stride, stride,
-      index_buffer->Size() / sizeof(uint32_t), command_pool, queue, pp_blas);
+      index_buffer->Size() / (sizeof(uint32_t) * 3), command_pool, queue,
+      pp_blas);
 }
 
 VkResult Device::CreateTopLevelAccelerationStructure(
@@ -953,103 +850,18 @@ VkResult Device::CreateTopLevelAccelerationStructure(
   acceleration_structure_geometry.geometry.instances.data =
       instance_data_device_address;
 
-  // Get the size requirements for buffers involved in the acceleration
-  // structure build process
-  VkAccelerationStructureBuildGeometryInfoKHR
-      acceleration_structure_build_geometry_info{};
-  acceleration_structure_build_geometry_info.sType =
-      VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-  acceleration_structure_build_geometry_info.type =
-      VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-  acceleration_structure_build_geometry_info.flags =
-      VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
-  acceleration_structure_build_geometry_info.geometryCount = 1;
-  acceleration_structure_build_geometry_info.pGeometries =
-      &acceleration_structure_geometry;
-
-  const uint32_t primitive_count = acceleration_structure_instances.size();
-
-  VkAccelerationStructureBuildSizesInfoKHR
-      acceleration_structure_build_sizes_info{};
-  acceleration_structure_build_sizes_info.sType =
-      VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
-  procedures_.vkGetAccelerationStructureBuildSizesKHR(
-      device_, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
-      &acceleration_structure_build_geometry_info, &primitive_count,
-      &acceleration_structure_build_sizes_info);
-
-  // Create a buffer to hold the acceleration structure
-  std::unique_ptr<Buffer> buffer;
-  CreateBuffer(
-      acceleration_structure_build_sizes_info.accelerationStructureSize,
-      VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
-          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-      VMA_MEMORY_USAGE_GPU_ONLY, &buffer);
-
-  // Create the acceleration structure
   VkAccelerationStructureKHR acceleration_structure;
-  VkAccelerationStructureCreateInfoKHR acceleration_structure_create_info{};
-  acceleration_structure_create_info.sType =
-      VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
-  acceleration_structure_create_info.buffer = buffer->Handle();
-  acceleration_structure_create_info.size =
-      acceleration_structure_build_sizes_info.accelerationStructureSize;
-  acceleration_structure_create_info.type =
-      VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-  procedures_.vkCreateAccelerationStructureKHR(
-      device_, &acceleration_structure_create_info, nullptr,
-      &acceleration_structure);
 
-  // The actual build process starts here
+  std::unique_ptr<Buffer> buffer;
 
-  // Create a scratch buffer as a temporary storage for the acceleration
-  // structure build
-  std::unique_ptr<Buffer> scratch_buffer;
-  CreateBuffer(acceleration_structure_build_sizes_info.buildScratchSize,
-               VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
-                   VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-                   VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-               VMA_MEMORY_USAGE_GPU_ONLY, &scratch_buffer);
-
-  VkAccelerationStructureBuildGeometryInfoKHR
-      acceleration_build_geometry_info{};
-  acceleration_build_geometry_info.sType =
-      VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-  acceleration_build_geometry_info.type =
-      VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-  acceleration_build_geometry_info.flags =
+  BuildAccelerationStructure(
+      this, acceleration_structure_geometry,
+      VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR,
       VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR |
-      VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
-  acceleration_build_geometry_info.mode =
-      VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
-  acceleration_build_geometry_info.dstAccelerationStructure =
-      acceleration_structure;
-  acceleration_build_geometry_info.geometryCount = 1;
-  acceleration_build_geometry_info.pGeometries =
-      &acceleration_structure_geometry;
-  acceleration_build_geometry_info.scratchData.deviceAddress =
-      scratch_buffer->GetDeviceAddress();
-
-  VkAccelerationStructureBuildRangeInfoKHR
-      acceleration_structure_build_range_info;
-  acceleration_structure_build_range_info.primitiveCount = primitive_count;
-  acceleration_structure_build_range_info.primitiveOffset = 0;
-  acceleration_structure_build_range_info.firstVertex = 0;
-  acceleration_structure_build_range_info.transformOffset = 0;
-  std::vector<VkAccelerationStructureBuildRangeInfoKHR *>
-      acceleration_build_structure_range_infos = {
-          &acceleration_structure_build_range_info};
-
-  // Build the acceleration structure on the device via a one-time command
-  // buffer submission Some implementations may support acceleration structure
-  // building on the host
-  // (VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands),
-  // but we prefer device builds
-  command_pool->SingleTimeCommands(queue, [&](VkCommandBuffer command_buffer) {
-    procedures_.vkCmdBuildAccelerationStructuresKHR(
-        command_buffer, 1, &acceleration_build_geometry_info,
-        acceleration_build_structure_range_infos.data());
-  });
+          VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR,
+      VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR,
+      acceleration_structure_instances.size(), command_pool, queue,
+      &acceleration_structure, &buffer);
 
   // Get the top acceleration structure's handle, which will be used to setup
   // it's descriptor

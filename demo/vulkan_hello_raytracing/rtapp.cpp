@@ -138,6 +138,7 @@ void RayTracingApp::CreateCoreObjects() {
   vulkan::CoreSettings core_settings;
   core_settings.window = window_;
   core_settings.enable_ray_tracing = true;
+  core_settings.device_index = -1;
   core_ = std::make_unique<vulkan::Core>(core_settings);
 }
 
@@ -155,9 +156,20 @@ void RayTracingApp::DestroyFrameAssets() {
 }
 
 void RayTracingApp::CreateObjectAssets() {
+  //  std::vector<glm::vec3> vertices = {
+  //      {-0.5f, -0.5f, -0.5f}, {-0.5f, -0.5f, 0.5f}, {-0.5f, 0.5f, -0.5f},
+  //      {-0.5f, 0.5f, 0.5f},   {0.5f, -0.5f, -0.5f}, {0.5f, -0.5f, 0.5f},
+  //      {0.5f, 0.5f, -0.5f},   {0.5f, 0.5f, 0.5f},
+  //  };
+  //  std::vector<uint32_t> indices = {
+  //      0, 1, 2, 2, 1, 3, 4, 6, 5, 5, 6, 7, 0, 2, 4, 4, 2, 6,
+  //      1, 5, 3, 3, 5, 7, 0, 4, 1, 1, 4, 5, 2, 3, 6, 6, 3, 7,
+  //  };
+
   std::vector<glm::vec3> vertices = {
       {1.0f, 1.0f, 0.0f}, {-1.0f, 1.0f, 0.0f}, {0.0f, -1.0f, 0.0f}};
   std::vector<uint32_t> indices = {0, 1, 2};
+
   core_->CreateStaticBuffer<glm::vec3>(
       vertices.size(),
       VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
@@ -168,20 +180,10 @@ void RayTracingApp::CreateObjectAssets() {
       VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
           VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
       &index_buffer_);
-  vertex_buffer_->UploadContents(vertices.data(), vertices.size());
-  index_buffer_->UploadContents(indices.data(), indices.size());
-  core_->CreateBottomLevelAccelerationStructure(vertex_buffer_->GetBuffer(),
-                                                index_buffer_->GetBuffer(),
-                                                sizeof(glm::vec3), &blas_);
+  core_->CreateBottomLevelAccelerationStructure(vertices, indices, &blas_);
 
-  static float theta = glm::radians(0.0f);
-  //  theta += glm::radians(0.1f);
-
-  core_->CreateTopLevelAccelerationStructure(
-      {{blas_.get(),
-        // glm::mat4{1.0f}
-        glm::rotate(glm::mat4{1.0f}, theta, glm::vec3{0.0f, 1.0f, 0.0f})}},
-      &tlas_);
+  core_->CreateTopLevelAccelerationStructure({{blas_.get(), glm::mat4{1.0f}}},
+                                             &tlas_);
 
   core_->Device()->CreateDescriptorSetLayout(
       {{0, VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1,
