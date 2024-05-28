@@ -159,8 +159,7 @@ void TestSingleRootCubicPolynomialLinear() {
   geometry::SolveCubicPolynomial(poly[3], poly[2], poly[1], poly[0],
                                  roots.data(), &num_roots);
   EXPECT_EQ(num_roots, 1);
-  EXPECT_NEAR(PolynomialEval(poly, roots[0]), 0,
-              Eps<Scalar>());
+  EXPECT_NEAR(PolynomialEval(poly, roots[0]), 0, Eps<Scalar>());
 }
 
 template <typename Scalar>
@@ -172,10 +171,8 @@ void TestDoubleRootCubicPolynomial() {
   geometry::SolveCubicPolynomial(poly[3], poly[2], poly[1], poly[0],
                                  roots.data(), &num_roots);
   EXPECT_EQ(num_roots, 2);
-  EXPECT_NEAR(PolynomialEval(poly, roots[0]), 0,
-              Eps<Scalar>());
-  EXPECT_NEAR(PolynomialEval(poly, roots[1]), 0,
-              Eps<Scalar>());
+  EXPECT_NEAR(PolynomialEval(poly, roots[0]), 0, Eps<Scalar>());
+  EXPECT_NEAR(PolynomialEval(poly, roots[1]), 0, Eps<Scalar>());
 }
 
 template <typename Scalar>
@@ -194,10 +191,9 @@ void TestRandomCubicPolynomial() {
   geometry::SolveCubicPolynomial(poly[3], poly[2], poly[1], poly[0],
                                  roots.data(), &num_roots);
   for (int i = 0; i < num_roots; ++i) {
-    EXPECT_NEAR(PolynomialEval(poly, roots[i]), 0,
-                Eps<Scalar>());
-    if (isnan(PolynomialEval(poly, roots[i])) || fabs(PolynomialEval(poly, roots[i])) >
-        Eps<Scalar>()) {
+    EXPECT_NEAR(PolynomialEval(poly, roots[i]), 0, Eps<Scalar>());
+    if (isnan(PolynomialEval(poly, roots[i])) ||
+        fabs(PolynomialEval(poly, roots[i])) > Eps<Scalar>()) {
       std::cout << "Poly: " << poly[3] << "x^3 + " << poly[2] << "x^2 + "
                 << poly[1] << "x + " << poly[0] << std::endl;
       std::cout << "Root: ";
