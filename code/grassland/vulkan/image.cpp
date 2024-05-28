@@ -132,4 +132,35 @@ void UploadImage(Queue *queue,
         image->Aspect());
   });
 }
+
+void BlitImage(VkCommandBuffer cmd_buffer,
+               Image *src_image,
+               Image *dst_image,
+               int num_region,
+               VkImageBlit *regions,
+               VkFilter filter) {
+  VkImageBlit blit{};
+  if (!num_region || !regions) {
+    blit.srcSubresource.aspectMask = src_image->Aspect();
+    blit.srcSubresource.mipLevel = 0;
+    blit.srcSubresource.baseArrayLayer = 0;
+    blit.srcSubresource.layerCount = 1;
+    blit.srcOffsets[0] = {0, 0, 0};
+    blit.srcOffsets[1] = {static_cast<int32_t>(src_image->Width()),
+                          static_cast<int32_t>(src_image->Height()), 1};
+    blit.dstSubresource.aspectMask = dst_image->Aspect();
+    blit.dstSubresource.mipLevel = 0;
+    blit.dstSubresource.baseArrayLayer = 0;
+    blit.dstSubresource.layerCount = 1;
+    blit.dstOffsets[0] = {0, 0, 0};
+    blit.dstOffsets[1] = {static_cast<int32_t>(dst_image->Width()),
+                          static_cast<int32_t>(dst_image->Height()), 1};
+    regions = &blit;
+    num_region = 1;
+  }
+  vkCmdBlitImage(cmd_buffer, src_image->Handle(),
+                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst_image->Handle(),
+                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, num_region, regions,
+                 filter);
+}
 }  // namespace grassland::vulkan

@@ -89,4 +89,11 @@ void UploadImage(Queue *queue,
                  const void *data,
                  VkDeviceSize size);
 
+void BlitImage(VkCommandBuffer cmd_buffer,
+               Image *src_image,
+               Image *dst_image,
+               int num_region = 0,
+               VkImageBlit *regions = nullptr,
+               VkFilter filter = VK_FILTER_LINEAR);
+
 }  // namespace grassland::vulkan
