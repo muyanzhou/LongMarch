@@ -28,6 +28,17 @@ class DescriptorSet {
                                 const struct Image *image,
                                 VkSampler sampler = VK_NULL_HANDLE) const;
 
+  void BindStorageImage(uint32_t binding, const struct Image *image) const;
+
+  void BindAccelerationStructure(
+      uint32_t binding,
+      const struct AccelerationStructure *acceleration_structure) const;
+
+  void BindStorageBuffers(uint32_t binding,
+                          const std::vector<const class Buffer *> &buffers,
+                          const std::vector<VkDeviceSize> &offsets = {},
+                          const std::vector<VkDeviceSize> &ranges = {}) const;
+
  private:
   const class DescriptorPool *descriptor_pool_{};
   VkDescriptorSet set_{};

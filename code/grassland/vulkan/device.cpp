@@ -824,7 +824,8 @@ VkResult Device::CreateTopLevelAccelerationStructure(
   std::unique_ptr<Buffer> instances_buffer;
   CreateBuffer(
       sizeof(VkAccelerationStructureInstanceKHR) *
-          acceleration_structure_instances.size(),
+          std::max(acceleration_structure_instances.size(),
+                   static_cast<size_t>(1)),
       VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
           VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
       VMA_MEMORY_USAGE_CPU_TO_GPU, &instances_buffer);
