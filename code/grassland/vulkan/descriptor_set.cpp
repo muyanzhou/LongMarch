@@ -132,4 +132,62 @@ void DescriptorSet::BindStorageBuffers(
   vkUpdateDescriptorSets(descriptor_pool_->Device()->Handle(), 1,
                          &write_descriptor_set, 0, nullptr);
 }
+
+void DescriptorSet::BindSampledImages(
+    uint32_t binding,
+    const std::vector<const struct Image *> &images) const {
+  std::vector<VkDescriptorImageInfo> image_infos;
+  image_infos.reserve(images.size());
+  for (size_t i = 0; i < images.size(); i++) {
+    VkDescriptorImageInfo image_info{};
+    image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    image_info.imageView = images[i]->ImageView();
+    image_info.sampler = VK_NULL_HANDLE;
+    image_infos.push_back(image_info);
+  }
+
+  VkWriteDescriptorSet write_descriptor_set{};
+  write_descriptor_set.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  write_descriptor_set.dstSet = set_;
+  write_descriptor_set.dstBinding = binding;
+  write_descriptor_set.dstArrayElement = 0;
+  write_descriptor_set.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+  write_descriptor_set.descriptorCount = static_cast<uint32_t>(images.size());
+  write_descriptor_set.pImageInfo = image_infos.data();
+
+  vkUpdateDescriptorSets(descriptor_pool_->Device()->Handle(), 1,
+                         &write_descriptor_set, 0, nullptr);
+}
+
+void DescriptorSet::BindSamplers(uint32_t binding,
+                                 const std::vector<VkSampler> &samplers) const {
+  std::vector<VkDescriptorImageInfo> image_infos;
+  image_infos.reserve(samplers.size());
+  for (size_t i = 0; i < samplers.size(); i++) {
+    VkDescriptorImageInfo image_info{};
+    image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    image_info.imageView = VK_NULL_HANDLE;
+    image_info.sampler = samplers[i];
+    image_infos.push_back(image_info);
+  }
+
+  VkWriteDescriptorSet write_descriptor_set{};
+  write_descriptor_set.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  write_descriptor_set.dstSet = set_;
+  write_descriptor_set.dstBinding = binding;
+  write_descriptor_set.dstArrayElement = 0;
+  write_descriptor_set.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+  write_descriptor_set.descriptorCount = static_cast<uint32_t>(samplers.size());
+  write_descriptor_set.pImageInfo = image_infos.data();
+
+  vkUpdateDescriptorSets(descriptor_pool_->Device()->Handle(), 1,
+                         &write_descriptor_set, 0, nullptr);
+}
+
+void DescriptorSet::BindStorageBuffer(uint32_t binding,
+                                      const struct Buffer *buffer,
+                                      VkDeviceSize offset,
+                                      VkDeviceSize range) const {
+  BindStorageBuffers(binding, {buffer}, {offset}, {range});
+}
 }  // namespace grassland::vulkan

@@ -112,7 +112,7 @@ struct DynamicBuffer : public BufferObject, public DynamicObject {
     return staging_buffer_->Size();
   }
 
-  Buffer *GetBuffer(int frame_index) const override {
+  Buffer *GetBuffer(uint32_t frame_index) const override {
     return buffers_[frame_index].get();
   }
 

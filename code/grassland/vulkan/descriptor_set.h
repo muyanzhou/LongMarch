@@ -22,7 +22,7 @@ class DescriptorSet {
   void BindUniformBuffer(uint32_t binding,
                          const class Buffer *buffer,
                          VkDeviceSize offset = 0,
-                         VkDeviceSize range = 0) const;
+                         VkDeviceSize range = VK_WHOLE_SIZE) const;
 
   void BindCombinedImageSampler(uint32_t binding,
                                 const struct Image *image,
@@ -34,10 +34,21 @@ class DescriptorSet {
       uint32_t binding,
       const struct AccelerationStructure *acceleration_structure) const;
 
+  void BindStorageBuffer(uint32_t binding,
+                         const class Buffer *buffer,
+                         VkDeviceSize offset = 0,
+                         VkDeviceSize range = VK_WHOLE_SIZE) const;
+
   void BindStorageBuffers(uint32_t binding,
                           const std::vector<const class Buffer *> &buffers,
                           const std::vector<VkDeviceSize> &offsets = {},
                           const std::vector<VkDeviceSize> &ranges = {}) const;
+
+  void BindSampledImages(uint32_t binding,
+                         const std::vector<const struct Image *> &images) const;
+
+  void BindSamplers(uint32_t binding,
+                    const std::vector<VkSampler> &samplers) const;
 
  private:
   const class DescriptorPool *descriptor_pool_{};
