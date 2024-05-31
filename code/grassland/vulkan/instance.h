@@ -76,6 +76,10 @@ class Instance {
       const struct DeviceFeatureRequirement &device_feature_requirement,
       double_ptr<struct Device> pp_device) const;
 
+  InstanceProcedures Procedures() const {
+    return instance_procedures_;
+  }
+
  private:
   InstanceCreateHint create_hint_;
 

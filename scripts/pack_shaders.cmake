@@ -44,11 +44,15 @@ function(flatten_glsl_shader input_file output_file)
 
     file(MAKE_DIRECTORY ${OUTPUT_DIR})
 
+    set(SHADER_DEPEND_FILES ${input_file})
+    list(APPEND SHADER_DEPEND_FILES ${SHADER_INCLUDE_FILES})
+    message(STATUS "SHADER DEPEND FILES: ${SHADER_DEPEND_FILES}")
+
     add_custom_command(
             OUTPUT ${output_file}
             # Make dir of OUTPUT_DIR
             COMMAND ${LONG_MARCH_PYTHON3_EXECUTABLE} ${LONG_MARCH_SOURCE_DIR}/scripts/flatten_glsl.py ${input_file} ${output_file}
-            DEPENDS ${input_file} ${SHADER_INCLUDE_FILES}
+            DEPENDS ${SHADER_DEPEND_FILES}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMENT "Flattening GLSL shader: ${input_file} -> ${output_file}"
     )
