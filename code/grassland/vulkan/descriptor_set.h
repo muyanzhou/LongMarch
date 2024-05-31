@@ -47,6 +47,8 @@ class DescriptorSet {
   void BindSampledImages(uint32_t binding,
                          const std::vector<const struct Image *> &images) const;
 
+  void BindInputAttachment(uint32_t binding, const struct Image *image) const;
+
   void BindSamplers(uint32_t binding,
                     const std::vector<VkSampler> &samplers) const;
 

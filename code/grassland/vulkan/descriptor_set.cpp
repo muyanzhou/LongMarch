@@ -190,4 +190,25 @@ void DescriptorSet::BindStorageBuffer(uint32_t binding,
                                       VkDeviceSize range) const {
   BindStorageBuffers(binding, {buffer}, {offset}, {range});
 }
+
+void DescriptorSet::BindInputAttachment(uint32_t binding,
+                                        const struct Image *image) const {
+  VkDescriptorImageInfo image_info{};
+  image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  image_info.imageView = image->ImageView();
+  image_info.sampler = VK_NULL_HANDLE;
+
+  VkWriteDescriptorSet write_descriptor_set{};
+  write_descriptor_set.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  write_descriptor_set.dstSet = set_;
+  write_descriptor_set.dstBinding = binding;
+  write_descriptor_set.dstArrayElement = 0;
+  write_descriptor_set.descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
+  write_descriptor_set.descriptorCount = 1;
+  write_descriptor_set.pImageInfo = &image_info;
+
+  vkUpdateDescriptorSets(descriptor_pool_->Device()->Handle(), 1,
+                         &write_descriptor_set, 0, nullptr);
+}
+
 }  // namespace grassland::vulkan
