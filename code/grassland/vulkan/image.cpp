@@ -65,6 +65,50 @@ VkResult Image::Resize(VkExtent2D extent) {
   return VK_SUCCESS;
 }
 
+void Image::FetchPixelData(CommandPool *command_pool,
+                           Queue *queue,
+                           VkRect2D rect,
+                           void *data,
+                           VkDeviceSize size,
+                           VkImageLayout image_layout) const {
+  std::unique_ptr<vulkan::Buffer> staging_buffer;
+  device_->CreateBuffer(size, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                        VMA_MEMORY_USAGE_CPU_TO_GPU, &staging_buffer);
+  command_pool->SingleTimeCommands(queue, [&](VkCommandBuffer cmd_buffer) {
+    if (image_layout != VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) {
+      vulkan::TransitImageLayout(cmd_buffer, image_, image_layout,
+                                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                                 VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
+                                 VK_ACCESS_TRANSFER_READ_BIT, aspect_);
+    }
+
+    VkBufferImageCopy region{};
+    region.bufferOffset = 0;
+    region.bufferRowLength = 0;
+    region.bufferImageHeight = 0;
+    region.imageSubresource.aspectMask = aspect_;
+    region.imageSubresource.mipLevel = 0;
+    region.imageSubresource.baseArrayLayer = 0;
+    region.imageSubresource.layerCount = 1;
+    region.imageOffset = {rect.offset.x, rect.offset.y, 0};
+    region.imageExtent = {rect.extent.width, rect.extent.height, 1};
+    vkCmdCopyImageToBuffer(cmd_buffer, image_,
+                           VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                           staging_buffer->Handle(), 1, &region);
+
+    if (image_layout != VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) {
+      vulkan::TransitImageLayout(cmd_buffer, image_,
+                                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                 image_layout, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                                 VK_ACCESS_TRANSFER_READ_BIT, 0, aspect_);
+    }
+  });
+  std::memcpy(data, staging_buffer->Map(), size);
+  staging_buffer->Unmap();
+}
+
 void TransitImageLayout(VkCommandBuffer command_buffer,
                         VkImage image,
                         VkImageLayout old_layout,

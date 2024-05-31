@@ -61,6 +61,14 @@ class Image {
 
   VkResult Resize(VkExtent2D extent);
 
+  void FetchPixelData(
+      CommandPool *command_pool,
+      Queue *queue,
+      VkRect2D rect,
+      void *data,
+      VkDeviceSize size,
+      VkImageLayout image_layout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) const;
+
  private:
   const class Device *device_{};
   VkFormat format_{};
