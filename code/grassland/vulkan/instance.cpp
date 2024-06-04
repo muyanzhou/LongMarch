@@ -83,7 +83,7 @@ VkResult CreateInstance(InstanceCreateHint create_hint,
   }
 
 #ifdef __APPLE__
-  create_info.AddExtension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+  create_hint.AddExtension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 #endif
 
   instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
