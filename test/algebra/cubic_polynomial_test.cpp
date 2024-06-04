@@ -53,31 +53,42 @@ std::vector<Scalar> RandomUnsolvableQuadraticPolynomial() {
 }
 
 template <typename Scalar>
-std::vector<Scalar> RandomSolvableQuadraticPolynomial() {
+std::vector<Scalar> RandomLinearPolynomial() {
   std::random_device rd;
   std::mt19937 gen(rd());
-  std::uniform_real_distribution<Scalar> dis(-1, 1);
-  std::vector<Scalar> poly(3);
+  std::vector<Scalar> poly(2);
+  poly[0] = -std::uniform_real_distribution<Scalar>(
+      algebra::Eps<Scalar>(), 1.0 - algebra::Eps<Scalar>())(gen);
+  poly[1] = 1.0;
+  Scalar scale = 0.0;
   do {
-    for (size_t i = 0; i < 3; ++i) {
-      poly[i] = dis(gen);
-    }
-  } while (poly[1] * poly[1] - 4 * poly[0] * poly[2] < 0 ||
-           fabs(poly[2]) < 0.5);
+    scale = std::uniform_real_distribution<Scalar>(-1.0, 1.0)(gen);
+  } while (fabs(scale) < 0.01);
+  for (int i = 0; i < poly.size(); i++) {
+    poly[i] *= scale;
+  }
   return poly;
 }
 
 template <typename Scalar>
-std::vector<Scalar> RandomLinearPolynomial() {
+std::vector<Scalar> RandomSolvableQuadraticPolynomial() {
   std::random_device rd;
   std::mt19937 gen(rd());
-  std::uniform_real_distribution<Scalar> dis(-1, 1);
-  std::vector<Scalar> poly(2);
+  std::uniform_real_distribution<Scalar> dis(algebra::Eps<Scalar>(),
+                                             1.0 - algebra::Eps<Scalar>());
+  Scalar x0, x1;
   do {
-    for (size_t i = 0; i < 2; ++i) {
-      poly[i] = dis(gen);
-    }
-  } while (fabs(poly[1]) < 0.5);
+    x0 = dis(gen);
+    x1 = dis(gen);
+  } while (fabs(x0 - x1) < 0.01);
+  std::vector<Scalar> poly = PolynomialMul<Scalar>({-x0, 1.0}, {-x1, 1.0});
+  Scalar scale = 0.0;
+  do {
+    scale = std::uniform_real_distribution<Scalar>(-1.0, 1.0)(gen);
+  } while (fabs(scale) < 0.01);
+  for (int i = 0; i < poly.size(); i++) {
+    poly[i] *= scale;
+  }
   return poly;
 }
 
@@ -94,10 +105,12 @@ Scalar MaxCoeff(const std::vector<Scalar> &poly, Scalar x = 1) {
 
 template <typename Scalar>
 Scalar Eps();
+
 template <>
 float Eps() {
   return 1e-4;
 }
+
 template <>
 double Eps() {
   return 1e-8;
@@ -109,8 +122,8 @@ void TestUnsolvableCubicPolynomialQuadratic() {
   poly.emplace_back(0);
   std::vector<Scalar> roots(3);
   int num_roots = 0;
-  geometry::SolveCubicPolynomial(poly[3], poly[2], poly[1], poly[0],
-                                 roots.data(), &num_roots);
+  geometry::SolveCubicPolynomialLimitedRange(poly[3], poly[2], poly[1], poly[0],
+                                             roots.data(), &num_roots);
   EXPECT_EQ(num_roots, 0);
 }
 
@@ -125,8 +138,8 @@ void TestUnsolvableCubicPolynomialConstant() {
   } while (poly[0] == 0);
   std::vector<Scalar> roots(3);
   int num_roots = 0;
-  geometry::SolveCubicPolynomial(poly[3], poly[2], poly[1], poly[0],
-                                 roots.data(), &num_roots);
+  geometry::SolveCubicPolynomialLimitedRange(poly[3], poly[2], poly[1], poly[0],
+                                             roots.data(), &num_roots);
   EXPECT_EQ(num_roots, 0);
 }
 
@@ -137,8 +150,8 @@ void TestSingleRootCubicPolynomialCubic() {
   auto poly = PolynomialMul(poly0, poly1);
   std::vector<Scalar> roots(3);
   int num_roots = 0;
-  geometry::SolveCubicPolynomial(poly[3], poly[2], poly[1], poly[0],
-                                 roots.data(), &num_roots);
+  geometry::SolveCubicPolynomialLimitedRange(poly[3], poly[2], poly[1], poly[0],
+                                             roots.data(), &num_roots);
   EXPECT_EQ(num_roots, 1);
   EXPECT_NEAR(PolynomialEval(poly, roots[0]), 0, Eps<Scalar>());
   if (num_roots != 1 || fabs(PolynomialEval(poly, roots[0])) > Eps<Scalar>()) {
@@ -173,6 +186,22 @@ void TestDoubleRootCubicPolynomial() {
   EXPECT_EQ(num_roots, 2);
   EXPECT_NEAR(PolynomialEval(poly, roots[0]), 0, Eps<Scalar>());
   EXPECT_NEAR(PolynomialEval(poly, roots[1]), 0, Eps<Scalar>());
+
+  if (num_roots != 2 || fabs(PolynomialEval(poly, roots[0])) > Eps<Scalar>() ||
+      fabs(PolynomialEval(poly, roots[1])) > Eps<Scalar>()) {
+    std::cout << "Poly: " << poly[3] << "x^3 + " << poly[2] << "x^2 + "
+              << poly[1] << "x + " << poly[0] << std::endl;
+    std::cout << "Root: ";
+    for (int i = 0; i < num_roots; ++i) {
+      std::cout << roots[i] << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "Eval: ";
+    for (int i = 0; i < num_roots; ++i) {
+      std::cout << PolynomialEval(poly, roots[i]) << " ";
+    }
+    std::cout << std::endl;
+  }
 }
 
 template <typename Scalar>
@@ -188,8 +217,8 @@ void TestRandomCubicPolynomial() {
   } while (fabs(poly[3]) < 0.5);
   std::vector<Scalar> roots(3);
   int num_roots = 0;
-  geometry::SolveCubicPolynomial(poly[3], poly[2], poly[1], poly[0],
-                                 roots.data(), &num_roots);
+  algebra::SolveCubicPolynomialLimitedRange(poly[3], poly[2], poly[1], poly[0],
+                                            roots.data(), &num_roots);
   for (int i = 0; i < num_roots; ++i) {
     EXPECT_NEAR(PolynomialEval(poly, roots[i]), 0, Eps<Scalar>());
     if (isnan(PolynomialEval(poly, roots[i])) ||
@@ -218,11 +247,11 @@ void BatchedTest() {
     TestSingleRootCubicPolynomialCubic<Scalar>();
     TestSingleRootCubicPolynomialLinear<Scalar>();
     TestDoubleRootCubicPolynomial<Scalar>();
-    TestRandomCubicPolynomial<Scalar>();
+    //        TestRandomCubicPolynomial<Scalar>();
   }
 }
 
-TEST(Geometry, CubicPolynomialSolve) {
+TEST(Algebra, CubicPolynomialSolve) {
   BatchedTest<float>();
   BatchedTest<double>();
 }

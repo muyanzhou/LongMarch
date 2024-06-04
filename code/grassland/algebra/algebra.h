@@ -1,8 +1,8 @@
 #pragma once
-#include "Eigen/Eigen"
-#include "grassland/utils/utils.h"
+#include "grassland/algebra/algebra_utils.h"
+#include "grassland/algebra/polynomial.h"
 
-namespace grassland::geometry {
+namespace grassland::algebra {
 using Eigen::Matrix;
 using Eigen::Matrix2;
 using Eigen::Matrix3;
@@ -38,5 +38,4 @@ int Sign(Scalar x) {
     return 0;
   }
 }
-
-}  // namespace grassland::geometry
+}  // namespace grassland::algebra

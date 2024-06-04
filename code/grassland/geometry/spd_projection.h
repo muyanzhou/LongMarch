@@ -1,6 +1,6 @@
 #pragma once
 
-#include "grassland/geometry/common.h"
+#include "grassland/geometry/geometry_utils.h"
 
 namespace grassland::geometry {
 

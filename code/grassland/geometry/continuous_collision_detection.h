@@ -1,5 +1,5 @@
 #pragma once
-#include "grassland/geometry/common.h"
+#include "grassland/geometry/geometry_utils.h"
 
 namespace grassland::geometry {
 
@@ -137,9 +137,9 @@ LM_DEVICE_FUNC bool EdgeEdgeCCD(const Vector3<Scalar> &p0,
   ThirdOrderVolumetricPolynomial<Scalar>(p1 - p0, p2 - p0, p3 - p0, v1 - v0,
                                          v2 - v0, v3 - v0, polynomial_terms);
   int num_roots = 0;
-  SolveCubicPolynomial(polynomial_terms[3], polynomial_terms[2],
-                       polynomial_terms[1], polynomial_terms[0], roots,
-                       &num_roots);
+  SolveCubicPolynomialLimitedRange(polynomial_terms[3], polynomial_terms[2],
+                                   polynomial_terms[1], polynomial_terms[0],
+                                   roots, &num_roots);
   PrivateSort(roots, num_roots);
   for (int i = 0; i < num_roots; i++) {
     auto root = roots[i];
@@ -200,9 +200,9 @@ LM_DEVICE_FUNC bool FacePointCCD(const Vector3<Scalar> &p0,
   ThirdOrderVolumetricPolynomial<Scalar>(p0 - p, p1 - p, p2 - p, v0 - v, v1 - v,
                                          v2 - v, polynomial_terms);
   int num_roots = 0;
-  SolveCubicPolynomial(polynomial_terms[3], polynomial_terms[2],
-                       polynomial_terms[1], polynomial_terms[0], roots,
-                       &num_roots);
+  SolveCubicPolynomialLimitedRange(polynomial_terms[3], polynomial_terms[2],
+                                   polynomial_terms[1], polynomial_terms[0],
+                                   roots, &num_roots);
   PrivateSort(roots, num_roots);
   for (int i = 0; i < num_roots; i++) {
     auto root = roots[i];
