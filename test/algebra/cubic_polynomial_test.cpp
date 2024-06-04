@@ -122,8 +122,8 @@ void TestUnsolvableCubicPolynomialQuadratic() {
   poly.emplace_back(0);
   std::vector<Scalar> roots(3);
   int num_roots = 0;
-  geometry::SolveCubicPolynomialLimitedRange(poly[3], poly[2], poly[1], poly[0],
-                                             roots.data(), &num_roots);
+  algebra::SolveCubicPolynomialLimitedRange(poly[3], poly[2], poly[1], poly[0],
+                                            roots.data(), &num_roots);
   EXPECT_EQ(num_roots, 0);
 }
 
@@ -138,8 +138,8 @@ void TestUnsolvableCubicPolynomialConstant() {
   } while (poly[0] == 0);
   std::vector<Scalar> roots(3);
   int num_roots = 0;
-  geometry::SolveCubicPolynomialLimitedRange(poly[3], poly[2], poly[1], poly[0],
-                                             roots.data(), &num_roots);
+  algebra::SolveCubicPolynomialLimitedRange(poly[3], poly[2], poly[1], poly[0],
+                                            roots.data(), &num_roots);
   EXPECT_EQ(num_roots, 0);
 }
 
@@ -150,8 +150,8 @@ void TestSingleRootCubicPolynomialCubic() {
   auto poly = PolynomialMul(poly0, poly1);
   std::vector<Scalar> roots(3);
   int num_roots = 0;
-  geometry::SolveCubicPolynomialLimitedRange(poly[3], poly[2], poly[1], poly[0],
-                                             roots.data(), &num_roots);
+  algebra::SolveCubicPolynomialLimitedRange(poly[3], poly[2], poly[1], poly[0],
+                                            roots.data(), &num_roots);
   EXPECT_EQ(num_roots, 1);
   EXPECT_NEAR(PolynomialEval(poly, roots[0]), 0, Eps<Scalar>());
   if (num_roots != 1 || fabs(PolynomialEval(poly, roots[0])) > Eps<Scalar>()) {
@@ -169,8 +169,8 @@ void TestSingleRootCubicPolynomialLinear() {
   poly.emplace_back(0);
   std::vector<Scalar> roots(3);
   int num_roots = 0;
-  geometry::SolveCubicPolynomial(poly[3], poly[2], poly[1], poly[0],
-                                 roots.data(), &num_roots);
+  algebra::SolveCubicPolynomialLimitedRange(poly[3], poly[2], poly[1], poly[0],
+                                            roots.data(), &num_roots);
   EXPECT_EQ(num_roots, 1);
   EXPECT_NEAR(PolynomialEval(poly, roots[0]), 0, Eps<Scalar>());
 }
@@ -181,8 +181,8 @@ void TestDoubleRootCubicPolynomial() {
   poly.emplace_back(0);
   std::vector<Scalar> roots(3);
   int num_roots = 0;
-  geometry::SolveCubicPolynomial(poly[3], poly[2], poly[1], poly[0],
-                                 roots.data(), &num_roots);
+  algebra::SolveCubicPolynomialLimitedRange(poly[3], poly[2], poly[1], poly[0],
+                                            roots.data(), &num_roots);
   EXPECT_EQ(num_roots, 2);
   EXPECT_NEAR(PolynomialEval(poly, roots[0]), 0, Eps<Scalar>());
   EXPECT_NEAR(PolynomialEval(poly, roots[1]), 0, Eps<Scalar>());
