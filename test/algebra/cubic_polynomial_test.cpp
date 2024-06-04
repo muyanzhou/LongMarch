@@ -47,7 +47,7 @@ std::vector<Scalar> RandomUnsolvableQuadraticPolynomial() {
     for (size_t i = 0; i < 3; ++i) {
       poly[i] = dis(gen);
     }
-  } while (poly[1] * poly[1] - 4 * poly[0] * poly[2] >= 0 ||
+  } while (poly[1] * poly[1] - 4 * poly[0] * poly[2] >= -0.01 ||
            fabs(poly[2]) < 0.5);
   return poly;
 }
