@@ -98,7 +98,7 @@ struct StaticBuffer : public BufferObject {
     return buffer_.get();
   }
 
-  [[nodiscard]] Buffer *GetBuffer(int frame_index) const override {
+  [[nodiscard]] Buffer *GetBuffer(uint32_t frame_index) const override {
     return GetBuffer();
   }
 

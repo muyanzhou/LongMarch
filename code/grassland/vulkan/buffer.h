@@ -65,6 +65,6 @@ void DownloadBuffer(Queue *queue,
 
 class BufferObject {
  public:
-  virtual Buffer *GetBuffer(int frame_index) const = 0;
+  virtual Buffer *GetBuffer(uint32_t frame_index) const = 0;
 };
 }  // namespace grassland::vulkan

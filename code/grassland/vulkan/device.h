@@ -195,6 +195,25 @@ class Device {
       Pipeline *ray_tracing_pipeline,
       double_ptr<ShaderBindingTable> pp_sbt) const;
 
+  void NameObject(VkImage image, const std::string &name);
+  void NameObject(VkImageView image_view, const std::string &name);
+  void NameObject(VkBuffer buffer, const std::string &name);
+  void NameObject(VkDeviceMemory memory, const std::string &name);
+  void NameObject(VkPipeline pipeline, const std::string &name);
+  void NameObject(VkPipelineLayout pipeline_layout, const std::string &name);
+  void NameObject(VkDescriptorSetLayout descriptor_set_layout,
+                  const std::string &name);
+  void NameObject(VkDescriptorSet descriptor_set, const std::string &name);
+  void NameObject(VkRenderPass render_pass, const std::string &name);
+  void NameObject(VkSampler sampler, const std::string &name);
+  void NameObject(VkCommandPool command_pool, const std::string &name);
+  void NameObject(VkCommandBuffer command_buffer, const std::string &name);
+  void NameObject(VkFramebuffer framebuffer, const std::string &name);
+  void NameObject(VkDescriptorPool descriptor_pool, const std::string &name);
+  void NameObject(VkShaderModule shader_module, const std::string &name);
+  void NameObject(VkAccelerationStructureKHR acceleration_structure,
+                  const std::string &name);
+
  private:
   const class Instance *instance_{};
 

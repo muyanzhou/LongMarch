@@ -186,6 +186,7 @@ std::vector<uint32_t> CompileGLSLToSPIRV(const std::string &glsl_code,
 
   auto resources = InitResources();
   if (!shader.parse(&resources, 100, false, EShMsgDefault)) {
+    SetErrorMessage("code:\n{}\n", glsl_code);
     // print error message
     SetErrorMessage("failed to parse shader!\nInfo: {}\n Debug Info: {}",
                     shader.getInfoLog(), shader.getInfoDebugLog());
