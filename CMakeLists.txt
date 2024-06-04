@@ -61,6 +61,14 @@ find_package(imgui CONFIG REQUIRED)
 set(IMGUI_LIB_NAME imgui::imgui)
 list(APPEND LIB_LIST ${IMGUI_LIB_NAME})
 
+find_package(mikktspace CONFIG REQUIRED)
+set(MIKKTSPACE_LIB_NAME mikktspace::mikktspace)
+list(APPEND LIB_LIST ${MIKKTSPACE_LIB_NAME})
+
+find_package(tinyobjloader CONFIG REQUIRED)
+set(TINYOBJLOADER_LIB_NAME tinyobjloader::tinyobjloader)
+list(APPEND LIB_LIST ${TINYOBJLOADER_LIB_NAME})
+
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 include(scripts/pack_shaders.cmake)

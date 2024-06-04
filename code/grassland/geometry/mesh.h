@@ -1,6 +1,10 @@
 #pragma once
+#include <filesystem>
+
 #include "fstream"
 #include "grassland/geometry/geometry_utils.h"
+#include "mikktspace.h"
+#include "tiny_obj_loader.h"
 
 namespace grassland::geometry {
 template <typename Scalar = float>
@@ -75,6 +79,8 @@ class Mesh {
     return indices_.data();
   }
 
+  int LoadObjFile(const std::string &filename);
+
   int SaveObjFile(const std::string &filename) const;
 
   int SplitVertices();
@@ -85,6 +91,11 @@ class Mesh {
       Scalar merging_threshold =
           0.8f);  // if all the face normals on a vertex's pairwise dot product
                   // larger than merging_threshold, then merge them
+
+  int InitializeTexCoords(const Vector2<Scalar> &tex_coord = Vector2<Scalar>{
+                              0.5, 0.5});
+
+  int GenerateTangents();
 
  private:
   std::vector<Vector3<Scalar>> positions_;
@@ -208,6 +219,125 @@ Mesh<Scalar>::Mesh(size_t num_vertices,
     tex_coords_.resize(num_vertices);
     std::copy(tex_coords, tex_coords + num_vertices, tex_coords_.begin());
   }
+}
+
+template <typename Scalar>
+int Mesh<Scalar>::LoadObjFile(const std::string &filename) {
+  if (!std::filesystem::is_regular_file(filename)) {
+    return -1;
+  }
+
+  std::filesystem::path path(filename);
+  tinyobj::ObjReaderConfig reader_config;
+  reader_config.mtl_search_path = path.parent_path().string();
+  tinyobj::ObjReader reader;
+
+  if (!reader.ParseFromFile(filename, reader_config)) {
+    if (!reader.Error().empty()) {
+      LogError("TinyObjReader: {}", reader.Error());
+    }
+    return -1;
+  }
+
+  if (!reader.Warning().empty()) {
+    LogWarning("TinyObjReader: {}", reader.Warning());
+  }
+
+  auto &attrib = reader.GetAttrib();
+  auto &shapes = reader.GetShapes();
+  auto &materials = reader.GetMaterials();
+
+  std::vector<Vector3<Scalar>> positions;
+  std::vector<Vector3<Scalar>> normals;
+  std::vector<Vector2<Scalar>> tex_coords;
+
+  std::vector<uint32_t> indices;
+
+  bool have_normal = false;
+  bool have_texcoord = false;
+
+  // Loop over shapes
+  for (size_t s = 0; s < shapes.size(); s++) {
+    // Loop over faces(polygon)
+    size_t index_offset = 0;
+    for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
+      size_t fv = size_t(shapes[s].mesh.num_face_vertices[f]);
+
+      // Loop over vertices in the face.
+      for (size_t v = 0; v < fv; v++) {
+        Vector3<Scalar> position;
+        Vector3<Scalar> normal;
+        Vector2<Scalar> tex_coord;
+
+        // access to vertex
+        tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
+        tinyobj::real_t vx = attrib.vertices[3 * size_t(idx.vertex_index) + 0];
+        tinyobj::real_t vy = attrib.vertices[3 * size_t(idx.vertex_index) + 1];
+        tinyobj::real_t vz = attrib.vertices[3 * size_t(idx.vertex_index) + 2];
+        position = Vector3<Scalar>(vx, vy, vz);
+
+        // Check if `normal_index` is zero or positive. negative = no normal
+        // data
+        if (idx.normal_index >= 0) {
+          tinyobj::real_t nx = attrib.normals[3 * size_t(idx.normal_index) + 0];
+          tinyobj::real_t ny = attrib.normals[3 * size_t(idx.normal_index) + 1];
+          tinyobj::real_t nz = attrib.normals[3 * size_t(idx.normal_index) + 2];
+          normal = Vector3<Scalar>(nx, ny, nz);
+          have_normal = true;
+        }
+
+        // Check if `texcoord_index` is zero or positive. negative = no texcoord
+        // data
+        if (idx.texcoord_index >= 0) {
+          tinyobj::real_t tx =
+              attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
+          tinyobj::real_t ty =
+              attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
+          tex_coord = Vector2<Scalar>(tx, ty);
+          have_texcoord = true;
+        }
+
+        positions.push_back(position);
+        normals.push_back(normal);
+        tex_coords.push_back(tex_coord);
+
+        // Optional: vertex colors
+        // tinyobj::real_t red   = attrib.colors[3*size_t(idx.vertex_index)+0];
+        // tinyobj::real_t green = attrib.colors[3*size_t(idx.vertex_index)+1];
+        // tinyobj::real_t blue  = attrib.colors[3*size_t(idx.vertex_index)+2];
+        if (v >= 2) {
+          indices.push_back(index_offset);
+          indices.push_back(index_offset + v - 1);
+          indices.push_back(index_offset + v);
+        }
+      }
+
+      index_offset += fv;
+
+      // per-face material
+      shapes[s].mesh.material_ids[f];
+    }
+  }
+
+  positions_ = positions;
+  if (have_normal)
+    normals_ = normals;
+  else
+    normals_.clear();
+  if (have_texcoord)
+    tex_coords_ = tex_coords;
+  else
+    tex_coords_.clear();
+  tangents_.clear();
+  signals_.clear();
+  indices_ = indices;
+
+  num_vertices_ = positions_.size();
+  num_indices_ = indices.size();
+
+  MergeVertices();
+
+  return 0;
 }
 
 template <typename Scalar>
@@ -374,6 +504,86 @@ int Mesh<Scalar>::GenerateNormals(Scalar merging_threshold) {
   num_indices_ = indices_.size();
 
   return 0;
+}
+
+template <typename Scalar>
+int Mesh<Scalar>::InitializeTexCoords(const Vector2<Scalar> &tex_coord) {
+  tex_coords_.resize(num_vertices_);
+  std::fill(tex_coords_.begin(), tex_coords_.end(), tex_coord);
+  return 0;
+}
+
+template <typename Scalar>
+int Mesh<Scalar>::GenerateTangents() {
+  SplitVertices();
+  if (tex_coords_.empty()) {
+    InitializeTexCoords();
+  }
+  if (normals_.empty()) {
+    GenerateNormals();
+  }
+
+  SMikkTSpaceInterface interface {};
+
+  interface.m_getNumFaces = [](const SMikkTSpaceContext *context) -> int {
+    auto mesh = reinterpret_cast<const Mesh *>(context->m_pUserData);
+    return mesh->NumIndices() / 3;
+  };
+
+  interface.m_getNumVerticesOfFace = [](const SMikkTSpaceContext *context,
+                                        const int face) { return 3; };
+
+  interface.m_getPosition = [](const SMikkTSpaceContext *context,
+                               float position[], const int face,
+                               const int vertex) {
+    auto mesh = reinterpret_cast<const Mesh *>(context->m_pUserData);
+    auto positions = mesh->positions_[face * 3 + vertex];
+    position[0] = positions[0];
+    position[1] = positions[1];
+    position[2] = positions[2];
+  };
+
+  interface.m_getNormal = [](const SMikkTSpaceContext *context, float normal[],
+                             const int face, const int vertex) {
+    auto mesh = reinterpret_cast<const Mesh *>(context->m_pUserData);
+    auto normals = mesh->normals_[face * 3 + vertex];
+    normal[0] = normals[0];
+    normal[1] = normals[1];
+    normal[2] = normals[2];
+  };
+
+  interface.m_getTexCoord = [](const SMikkTSpaceContext *context,
+                               float tex_coord[], const int face,
+                               const int vertex) {
+    auto mesh = reinterpret_cast<const Mesh *>(context->m_pUserData);
+    auto tex_coords = mesh->tex_coords_[face * 3 + vertex];
+    tex_coord[0] = tex_coords[0];
+    tex_coord[1] = tex_coords[1];
+  };
+
+  interface.m_setTSpaceBasic = [](const SMikkTSpaceContext *context,
+                                  const float tangent[], const float sign,
+                                  const int face, const int vertex) {
+    auto mesh = reinterpret_cast<Mesh *>(context->m_pUserData);
+    auto &tangents = mesh->tangents_[face * 3 + vertex];
+    tangents[0] = tangent[0];
+    tangents[1] = tangent[1];
+    tangents[2] = tangent[2];
+    mesh->signals_[face * 3 + vertex] = sign;
+  };
+
+  SMikkTSpaceContext context{};
+  context.m_pInterface = &interface;
+  context.m_pUserData = reinterpret_cast<void *>(this);
+
+  tangents_.resize(num_vertices_);
+  signals_.resize(num_vertices_);
+
+  if (genTangSpaceDefault(&context) == false) {
+    return -1;
+  }
+
+  return MergeVertices();
 }
 
 }  // namespace grassland::geometry

@@ -21,6 +21,12 @@ int main() {
                             positions.data());
   mesh.SplitVertices();
   mesh.MergeVertices();
-  mesh.GenerateNormals(0);
+  mesh.GenerateNormals();
+  mesh.InitializeTexCoords();
+  mesh.GenerateTangents();
   mesh.SaveObjFile("cube.obj");
+
+  mesh.LoadObjFile("matball.obj");
+  mesh.GenerateTangents();
+  mesh.SaveObjFile("matball_write.obj");
 }
