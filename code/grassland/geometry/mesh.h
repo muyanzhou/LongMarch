@@ -1,4 +1,5 @@
 #pragma once
+
 #include <filesystem>
 
 #include "fstream"
@@ -21,6 +22,7 @@ class Mesh {
   size_t NumVertices() const {
     return num_vertices_;
   }
+
   size_t NumIndices() const {
     return num_indices_;
   }
@@ -28,26 +30,31 @@ class Mesh {
   Vector3<Scalar> *Positions() {
     return positions_.data();
   }
+
   Vector3<Scalar> *Normals() {
     if (normals_.empty())
       return nullptr;
     return normals_.data();
   }
+
   Vector3<Scalar> *Tangents() {
     if (tangents_.empty())
       return nullptr;
     return tangents_.data();
   }
+
   Vector2<Scalar> *TexCoords() {
     if (tex_coords_.empty())
       return nullptr;
     return tex_coords_.data();
   }
+
   float *Signals() {
     if (signals_.empty())
       return nullptr;
     return signals_.data();
   }
+
   uint32_t *Indices() {
     return indices_.data();
   }
@@ -55,26 +62,31 @@ class Mesh {
   const Vector3<Scalar> *Positions() const {
     return positions_.data();
   }
+
   const Vector3<Scalar> *Normals() const {
     if (normals_.empty())
       return nullptr;
     return normals_.data();
   }
+
   const Vector3<Scalar> *Tangents() const {
     if (tangents_.empty())
       return nullptr;
     return tangents_.data();
   }
+
   const Vector2<Scalar> *TexCoords() const {
     if (tex_coords_.empty())
       return nullptr;
     return tex_coords_.data();
   }
+
   const float *Signals() const {
     if (signals_.empty())
       return nullptr;
     return signals_.data();
   }
+
   const uint32_t *Indices() const {
     return indices_.data();
   }
@@ -90,7 +102,7 @@ class Mesh {
   int GenerateNormals(
       Scalar merging_threshold =
           0.8f);  // if all the face normals on a vertex's pairwise dot product
-                  // larger than merging_threshold, then merge them
+  // larger than merging_threshold, then merge them
 
   int InitializeTexCoords(const Vector2<Scalar> &tex_coord = Vector2<Scalar>{
                               0.5, 0.5});
@@ -182,7 +194,20 @@ int Mesh<Scalar>::MergeVertices() {
     indices_[i] = index_map[indices_[i]];
   }
 
-  num_vertices_ = new_positions.size();
+  num_indices_ = 0;
+
+  for (size_t i = 0; i < indices_.size(); i += 3) {
+    auto i0 = indices_[i];
+    auto i1 = indices_[i + 1];
+    auto i2 = indices_[i + 2];
+    if (i0 != i1 && i0 != i2 && i1 != i2) {
+      indices_[num_indices_ + 0] = i0;
+      indices_[num_indices_ + 1] = i1;
+      indices_[num_indices_ + 2] = i2;
+      num_indices_ += 3;
+    }
+  }
+  indices_.resize(num_indices_);
 
   return 0;
 }

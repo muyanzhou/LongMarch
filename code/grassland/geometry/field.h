@@ -12,6 +12,9 @@ template <typename ContentType,
           typename Scalar = float>
 class Field {
  public:
+  typedef Scalar pos_t;
+  typedef ContentType content_t;
+
   static Matrix<Scalar, 3, 4> CreateTransform(Scalar delta_x,
                                               const Vector3<Scalar> &offset) {
     Matrix<Scalar, 3, 4> transform = Matrix<Scalar, 3, 4>::Zero();
