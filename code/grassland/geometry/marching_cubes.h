@@ -15,7 +15,7 @@ struct MarchingCubeConstructor {
   ContentType val[8];
   Vector3<Scalar> pos[8];
   ContentType isolevel;
-  static Vector3<Scalar> VertexInterpolation(Scalar isolevel,
+  static Vector3<Scalar> VertexInterpolation(ContentType isolevel,
                                              const Vector3<Scalar> &p1,
                                              const Vector3<Scalar> &p2,
                                              ContentType valp1,
