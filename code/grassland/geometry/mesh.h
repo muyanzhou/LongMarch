@@ -194,6 +194,8 @@ int Mesh<Scalar>::MergeVertices() {
     indices_[i] = index_map[indices_[i]];
   }
 
+  num_vertices_ = positions_.size();
+
   num_indices_ = 0;
 
   for (size_t i = 0; i < indices_.size(); i += 3) {
@@ -456,7 +458,7 @@ int Mesh<Scalar>::GenerateNormals(Scalar merging_threshold) {
     Vector3<Scalar> v1 = positions_[indices_[i + 1]];
     Vector3<Scalar> v2 = positions_[indices_[i + 2]];
     Vector3<Scalar> normal = (v1 - v0).cross(v2 - v0);
-    if (normal.norm() < Eps<Scalar>()) {
+    if (normal.norm() == 0.0) {
       continue;
     }
     normal.normalize();

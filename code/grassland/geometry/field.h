@@ -8,13 +8,10 @@ namespace grassland::geometry {
 using offset_t = data_structure::offset_t;
 
 template <typename ContentType,
-          typename GridType = data_structure::LinearGrid<ContentType>,
-          typename Scalar = float>
+          typename Scalar = float,
+          typename GridType = data_structure::LinearGrid<ContentType>>
 class Field {
  public:
-  typedef Scalar pos_t;
-  typedef ContentType content_t;
-
   static Matrix<Scalar, 3, 4> CreateTransform(Scalar delta_x,
                                               const Vector3<Scalar> &offset) {
     Matrix<Scalar, 3, 4> transform = Matrix<Scalar, 3, 4>::Zero();
@@ -99,6 +96,16 @@ class Field {
     return transform_ * Vector4<Scalar>(x, y, z, 1);
   }
 
+  Vector3<Scalar> to_world_position(const Vector3<Scalar> &pos) const {
+    Vector3<Scalar> pos_transformed = transform_ * pos.homogeneous();
+    return pos_transformed;
+  }
+
+  Vector3<Scalar> to_grid_position(const Vector3<Scalar> &pos) const {
+    Vector3<Scalar> pos_transformed = inv_transform_ * pos.homogeneous();
+    return pos_transformed;
+  }
+
   ContentType operator()(const Vector3<Scalar> &pos) const {
     Vector3<Scalar> pos_transformed = inv_transform_ * pos.homogeneous();
     return grid_.sample(pos_transformed[0], pos_transformed[1],
@@ -139,7 +146,7 @@ class Field {
     transform4.block(0, 0, 3, 4) = transform_;
     transform4.row(3) = Matrix<Scalar, 1, 4>::Zero();
     transform4(3, 3) = 1;
-    transform4 = transform4.inverse();
+    transform4 = transform4.inverse().eval();
     inv_transform_ = transform4.block(0, 0, 3, 4);
   }
 

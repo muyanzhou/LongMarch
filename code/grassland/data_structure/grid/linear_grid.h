@@ -1,6 +1,7 @@
 #pragma once
 
 #include "grassland/data_structure/grid/grid_utils.h"
+#include "grassland/data_structure/grid/linear_grid_view.h"
 
 namespace grassland::data_structure {
 template <typename ContentType>
@@ -113,6 +114,14 @@ class LinearGrid {
 
   const std::vector<ContentType> &buffer() const {
     return buffer_;
+  }
+
+  LinearGridView<ContentType> view() {
+    return {width_, height_, depth_, buffer_.data()};
+  }
+
+  operator LinearGridView<ContentType>() {
+    return view();
   }
 
  private:

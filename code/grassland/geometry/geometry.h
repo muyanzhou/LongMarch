@@ -5,6 +5,7 @@
 #include "grassland/geometry/field.h"
 #include "grassland/geometry/marching_cubes.h"
 #include "grassland/geometry/mesh.h"
+#include "grassland/geometry/point_to_mesh.h"
 #include "grassland/geometry/ray.h"
 #include "grassland/geometry/spd_projection.h"
 #include "grassland/geometry/triangle.h"

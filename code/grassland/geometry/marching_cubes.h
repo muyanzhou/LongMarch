@@ -370,9 +370,9 @@ struct MarchingCubeConstructor {
 };
 
 template <typename ContentType,
-          typename GridType = data_structure::LinearGrid<ContentType>,
-          typename Scalar = float>
-Mesh<Scalar> MarchingCubes(const Field<ContentType, GridType, Scalar> &field,
+          typename Scalar = float,
+          typename GridType = data_structure::LinearGrid<ContentType>>
+Mesh<Scalar> MarchingCubes(const Field<ContentType, Scalar, GridType> &field,
                            ContentType isolevel = 0) {
   const GridType &grid = field.grid();
   std::vector<Vector3<Scalar>> positions;
