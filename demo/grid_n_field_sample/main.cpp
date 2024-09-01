@@ -31,10 +31,10 @@ double SignedDistanceFunction(const geometry::Vector3<double> &pos) {
 }
 
 int main() {
-  geometry::Field<double, data_structure::LinearGrid<double>, double> field(
+  geometry::Field<double, double, data_structure::LinearGrid<double>> field(
       201, 201, 201, 0.05, {-5.0, -5.0, -5.0}, 1);
   data_structure::LinearGridView<double> grid_view(field.grid());
-  geometry::Field<double, decltype(grid_view), double> field_view(
+  geometry::Field<double, double, decltype(grid_view)> field_view(
       1.0, {-5.0, -5.0, -5.0}, grid_view);
 
   for (int i = 0; i < field.width(); i++) {

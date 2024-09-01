@@ -7,7 +7,7 @@ using namespace long_march;
 TEST(Geometry, FieldInterpolation) {
   geometry::Field<double> field(11, 11, 11, 1.0, {-5.0, -5.0, -5.0}, 1);
   data_structure::LinearGridView<double> grid_view(field.grid());
-  geometry::Field<double, decltype(grid_view)> field_view(
+  geometry::Field<double, float, decltype(grid_view)> field_view(
       1.0, {-5.0, -5.0, -5.0}, grid_view);
 
   for (int i = 0; i < field.width(); i++) {
