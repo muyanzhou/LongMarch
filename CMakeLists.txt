@@ -69,6 +69,11 @@ find_package(tinyobjloader CONFIG REQUIRED)
 set(TINYOBJLOADER_LIB_NAME tinyobjloader::tinyobjloader)
 list(APPEND LIB_LIST ${TINYOBJLOADER_LIB_NAME})
 
+if (WIN32)
+    find_path(D3DX12_INCLUDE_DIRS "d3dx12.h")
+    list(APPEND INC_LIST ${D3DX12_INCLUDE_DIRS})
+endif ()
+
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 include(scripts/pack_shaders.cmake)

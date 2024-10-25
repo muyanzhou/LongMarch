@@ -13,6 +13,10 @@
     "gtest",
     "imgui",
     "mikktspace",
-    "tinyobjloader"
+    "tinyobjloader",
+    {
+      "name": "d3dx12",
+      "platform": "windows"
+    }
   ]
 }
