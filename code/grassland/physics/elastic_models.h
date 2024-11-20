@@ -4,9 +4,6 @@
 namespace grassland {
 template <typename Real>
 struct ElasticNeoHookean {
-  ElasticNeoHookean(Real mu = 1.0, Real lambda = 1.0) : mu(mu), lambda(lambda) {
-  }
-
   typedef Real Scalar;
   typedef Eigen::Matrix<Real, 3, 3> InputType;
   typedef Eigen::Matrix<Real, 1, 1> OutputType;
@@ -51,8 +48,8 @@ struct ElasticNeoHookean {
     return H;
   }
 
-  Real mu;
-  Real lambda;
+  Real mu{1.0};
+  Real lambda{1.0};
 };
 
 }  // namespace grassland
