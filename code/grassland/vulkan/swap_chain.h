@@ -2,7 +2,7 @@
 
 #include "grassland/vulkan/device.h"
 #include "grassland/vulkan/surface.h"
-#include "grassland/vulkan/vulkan_utils.h"
+#include "grassland/vulkan/vulkan_util.h"
 
 namespace grassland::vulkan {
 
@@ -14,8 +14,8 @@ struct SwapChainSupportDetails {
 
 class Swapchain {
  public:
-  Swapchain(const class grassland::vulkan::Device *device,
-            const class grassland::vulkan::Surface *surface,
+  Swapchain(const class Device *device,
+            const class Surface *surface,
             VkSwapchainKHR swapchain,
             VkFormat format,
             VkExtent2D extent);

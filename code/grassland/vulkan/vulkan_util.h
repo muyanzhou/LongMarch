@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-#include "grassland/utils/utils.h"
+#include "grassland/util/util.h"
 
 namespace grassland::vulkan {
 #define GRASSLAND_VULKAN_PROCEDURE_VAR(function_name) \
@@ -23,8 +23,6 @@ constexpr bool kDefaultEnableValidationLayers = false;
 #else
 constexpr bool kDefaultEnableValidationLayers = true;
 #endif
-
-std::string PCIVendorIDToName(uint32_t vendor_id);
 
 std::string VkFormatToName(VkFormat format);
 
@@ -66,16 +64,16 @@ std::string GetErrorMessage();
 
 std::string VkResultToString(VkResult result);
 
-#define RETURN_IF_FAILED_VK(cmd, ...)                              \
-  do {                                                             \
-    VkResult res = cmd;                                            \
-    if (res != VK_SUCCESS) {                                       \
-      SetErrorMessage(__VA_ARGS__);                                \
-      SetErrorMessage("VkResult: {}",                              \
-                      ::grassland::vulkan::VkResultToString(res)); \
-      return res;                                                  \
-    }                                                              \
-                                                                   \
+#define RETURN_IF_FAILED_VK(cmd, ...)                                  \
+  do {                                                                 \
+    VkResult res = cmd;                                                \
+    if (res != VK_SUCCESS) {                                           \
+      ::grassland::vulkan::SetErrorMessage(__VA_ARGS__);               \
+      ::grassland::vulkan::SetErrorMessage(                            \
+          "VkResult: {}", ::grassland::vulkan::VkResultToString(res)); \
+      return res;                                                      \
+    }                                                                  \
+                                                                       \
   } while (false)
 
 class Instance;
