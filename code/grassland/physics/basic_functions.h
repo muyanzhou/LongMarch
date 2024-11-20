@@ -466,6 +466,68 @@ struct PlusConstant {
   OutputType s{};
 };
 
+template <typename Func, typename MatrixType>
+struct RightMultiplyMatrix {
+  typedef typename Func::Scalar Scalar;
+  typedef typename Func::InputType InputType;
+  typedef typename Eigen::Matrix<Scalar,
+                                 Func::OutputType::RowsAtCompileTime,
+                                 MatrixType::ColsAtCompileTime>
+      OutputType;
+
+  LM_DEVICE_FUNC bool ValidInput(const InputType &v) const {
+    return f.ValidInput(v);
+  }
+
+  LM_DEVICE_FUNC OutputType operator()(const InputType &v) const {
+    // m by n * n by k
+    return f(v) * s;
+  }
+
+  LM_DEVICE_FUNC Eigen::Matrix<Scalar,
+                               OutputType::SizeAtCompileTime,
+                               InputType::SizeAtCompileTime>
+  Jacobian(const InputType &v) const {
+    JacobianType<RightMultiplyMatrix> J;
+    constexpr int m = Func::OutputType::RowsAtCompileTime;
+    constexpr int n = Func::OutputType::ColsAtCompileTime;
+    constexpr int k = MatrixType::ColsAtCompileTime;
+    constexpr int input_width = InputType::SizeAtCompileTime;
+    J.setZero();
+    auto J_f = f.Jacobian(v);
+    for (int i = 0; i < k; i++) {
+      for (int j = 0; j < n; j++) {
+        J.block(i * m, 0, m, input_width) +=
+            s(j, i) * J_f.block(j * m, 0, m, input_width);
+      }
+    }
+    return J;
+  }
+
+  LM_DEVICE_FUNC HessianTensor<Scalar,
+                               OutputType::SizeAtCompileTime,
+                               InputType::SizeAtCompileTime>
+  Hessian(const InputType &v) const {
+    HessianType<RightMultiplyMatrix> H;
+    constexpr int m = Func::OutputType::RowsAtCompileTime;
+    constexpr int n = Func::OutputType::ColsAtCompileTime;
+    constexpr int k = MatrixType::ColsAtCompileTime;
+    constexpr int input_width = InputType::SizeAtCompileTime;
+    auto H_f = f.Hessian(v);
+    for (int i = 0; i < k; i++) {
+      for (int j = 0; j < n; j++) {
+        for (int c = 0; c < m; c++) {
+          H.m[i * m + c] += s(j, i) * H_f.m[j * m + c];
+        }
+      }
+    }
+    return H;
+  }
+
+  Func f{};
+  MatrixType s{};
+};
+
 template <typename Real>
 using CrossNormalized = Compose<Cross3<Real>, VecNormalized<Real>>;
 
