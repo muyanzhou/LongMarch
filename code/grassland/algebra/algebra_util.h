@@ -16,20 +16,20 @@ using Eigen::Vector3;
 using Eigen::Vector4;
 
 template <typename Scalar>
-Scalar Eps();
+LM_DEVICE_FUNC Scalar Eps();
 
 template <>
-inline float Eps<float>() {
+LM_DEVICE_FUNC inline float Eps<float>() {
   return 1e-4f;
 }
 
 template <>
-inline double Eps<double>() {
+LM_DEVICE_FUNC inline double Eps<double>() {
   return 1e-8;
 }
 
 template <typename Scalar>
-int Sign(Scalar x) {
+LM_DEVICE_FUNC int Sign(Scalar x) {
   if (x < 0) {
     return -1;
   } else if (x > 0) {

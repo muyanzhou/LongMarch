@@ -3,5 +3,6 @@
 #include "grassland/physics/dihedral_angle.h"
 #include "grassland/physics/elastic_models.h"
 #include "grassland/physics/fem_elements.h"
+#include "grassland/physics/geometry_sdf.h"
 
 namespace grassland {}

@@ -99,6 +99,9 @@ void TestFunctionSet(FunctionSet f = FunctionSet{}, const int test_cnt = 100) {
       x = InputVec::Random();
     }
 
+    // std::cout << "Test " << i << std::endl;
+    // std::cout << "x:\n" << x << std::endl;
+
     Real eps = algebra::Eps<Real>();
     OutputVec y = OutputTypeToOutputVec(f(InputVecToInputType(x)));
     OutputVec y_device =
