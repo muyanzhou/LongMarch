@@ -39,3 +39,7 @@ TEST(Physics, FunctionDerivativeCrossNormalized) {
 TEST(Physics, FunctionDerivativeAtan2) {
   TestFunctionSet<Atan2<double>>();
 }
+
+TEST(Physics, FunctionDerivativeCrossNorm) {
+  TestFunctionSet<CrossNorm<double>>();
+}

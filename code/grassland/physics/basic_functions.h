@@ -402,6 +402,52 @@ struct Atan2 {
   }
 };
 
+template <typename Real>
+struct CrossNorm {
+  typedef Real Scalar;
+  typedef Eigen::Matrix<Real, 3, 2> InputType;
+  typedef Eigen::Matrix<Real, 1, 1> OutputType;
+
+  LM_DEVICE_FUNC bool ValidInput(const InputType &F) const {
+    return F.col(0).cross(F.col(1)).norm() > algebra::Eps<Real>() * 100;
+  }
+
+  LM_DEVICE_FUNC OutputType operator()(const InputType &F) const {
+    return OutputType{F.col(0).cross(F.col(1)).norm()};
+  }
+
+  LM_DEVICE_FUNC Eigen::
+      Matrix<Real, OutputType::SizeAtCompileTime, InputType::SizeAtCompileTime>
+      Jacobian(const InputType &F) const {
+    Eigen::Matrix<Real, OutputType::SizeAtCompileTime,
+                  InputType::SizeAtCompileTime>
+        J;
+    Eigen::Vector3<Real> n = F.col(0).cross(F.col(1)).normalized();
+    J.block(0, 0, 1, 3) = n.transpose() * -Skew3<Real>(F.col(1));
+    J.block(0, 3, 1, 3) = n.transpose() * Skew3<Real>(F.col(0));
+    return J;
+  }
+
+  LM_DEVICE_FUNC HessianTensor<Real,
+                               OutputType::SizeAtCompileTime,
+                               InputType::SizeAtCompileTime>
+  Hessian(const InputType &F) const {
+    VecLength<Real> length;
+    HessianTensor<Real, OutputType::SizeAtCompileTime,
+                  InputType::SizeAtCompileTime>
+        H;
+    Eigen::Matrix<Real, 3, 6> J;
+    J.block(0, 0, 3, 3) = -Skew3<Real>(F.col(1));
+    J.block(0, 3, 3, 3) = Skew3<Real>(F.col(0));
+    Eigen::Vector3<Real> Fz = F.col(0).cross(F.col(1));
+    Eigen::Vector3<Real> n = Fz.normalized();
+    H.m[0].block(0, 3, 3, 3) = -Skew3<Real>(n);
+    H.m[0].block(3, 0, 3, 3) = Skew3<Real>(n);
+    H.m[0] += J.transpose() * length.Hessian(Fz).m[0] * J;
+    return H;
+  }
+};
+
 template <typename Func>
 struct MultiplyConstant {
   typedef typename Func::Scalar Scalar;
