@@ -1,5 +1,6 @@
 #pragma once
 #include <Eigen/Eigen>
+#include <iostream>
 
 #include "grassland/algebra/algebra.h"
 #include "grassland/util/util.h"

@@ -29,3 +29,10 @@ TEST(Physics, FunctionDerivativeDihedralEnergy) {
     TestFunctionSet(f, 1);
   }
 }
+
+TEST(Physics, FunctionDerivativeDihedralAngle) {
+  // Eigen::Vector<double, 12> x;
+  // x << 0, 2, 2, 0, 0, 2, 0, 0, -2, -2, 0, -2;
+  // TestFunctionSetWithInput<DihedralAngle<double>>({}, x);
+  TestFunctionSet<DihedralAngle<double>>({});
+}

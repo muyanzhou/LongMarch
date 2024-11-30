@@ -225,4 +225,387 @@ struct DihedralEnergy {
   Scalar rest_angle{0.0};
 };
 
+template <typename Real>
+struct DihedralAngle {
+  typedef Real Scalar;
+  typedef Eigen::Matrix<Real, 3, 4> InputType;
+  typedef Eigen::Matrix<Real, 1, 1> OutputType;
+
+  LM_DEVICE_FUNC bool ValidInput(const InputType &) const {
+    return true;
+  }
+
+  LM_DEVICE_FUNC OutputType operator()(const InputType &V) const {
+    Eigen::Vector3<Real> e0 = V.col(2) - V.col(1);
+    Eigen::Vector3<Real> e1 = V.col(0) - V.col(2);
+    Eigen::Vector3<Real> e2 = V.col(0) - V.col(1);
+    Eigen::Vector3<Real> e1_tilda = V.col(3) - V.col(2);
+    Eigen::Vector3<Real> e2_tilda = V.col(3) - V.col(1);
+    Eigen::Vector3<Real> n = e2.cross(e1).normalized();
+    Eigen::Vector3<Real> n_tilda = e1_tilda.cross(e2_tilda).normalized();
+    Real sin_theta = n.cross(n_tilda).dot(e0.normalized());
+    Real cos_theta = n.dot(n_tilda);
+    return OutputType{atan2(sin_theta, cos_theta)};
+  }
+
+  LM_DEVICE_FUNC Eigen::
+      Matrix<Real, OutputType::SizeAtCompileTime, InputType::SizeAtCompileTime>
+      Jacobian(const InputType &V) const {
+    Eigen::Vector3<Real> e0 = V.col(2) - V.col(1);
+    Eigen::Vector3<Real> e1 = V.col(0) - V.col(2);
+    Eigen::Vector3<Real> e2 = V.col(0) - V.col(1);
+    Eigen::Vector3<Real> e1_tilda = V.col(3) - V.col(2);
+    Eigen::Vector3<Real> e2_tilda = V.col(3) - V.col(1);
+
+    Real e0_norm_sqr = e0.squaredNorm();
+    Real e1_norm_sqr = e1.squaredNorm();
+    Real e2_norm_sqr = e2.squaredNorm();
+    Real e1_tilda_norm_sqr = e1_tilda.squaredNorm();
+    Real e2_tilda_norm_sqr = e2_tilda.squaredNorm();
+
+    Real e0_norm = sqrt(e0_norm_sqr);
+    Real e1_norm = sqrt(e1_norm_sqr);
+    Real e2_norm = sqrt(e2_norm_sqr);
+    Real e1_tilda_norm = sqrt(e1_tilda_norm_sqr);
+    Real e2_tilda_norm = sqrt(e2_tilda_norm_sqr);
+
+    Eigen::Vector3<Real> m0 =
+        -(e1 - e1.dot(e0) * e0 / e0_norm_sqr).normalized();
+    Eigen::Vector3<Real> m1 = (e2 - e2.dot(e1) * e1 / e1_norm_sqr).normalized();
+    Eigen::Vector3<Real> m2 = (e1 - e1.dot(e2) * e2 / e2_norm_sqr).normalized();
+
+    Eigen::Vector3<Real> m0_tilda =
+        -(e1_tilda - e1_tilda.dot(e0) * e0 / e0_norm_sqr).normalized();
+    Eigen::Vector3<Real> m1_tilda =
+        (e2_tilda - e2_tilda.dot(e1_tilda) * e1_tilda / e1_tilda_norm_sqr)
+            .normalized();
+    Eigen::Vector3<Real> m2_tilda =
+        (e1_tilda - e1_tilda.dot(e2_tilda) * e2_tilda / e2_tilda_norm_sqr)
+            .normalized();
+
+    Real h0 = -m0.dot(e1);
+    Real h1 = m1.dot(e2);
+    Real h2 = m2.dot(e1);
+
+    Real h0_tilda = -m0_tilda.dot(e1_tilda);
+    Real h1_tilda = m1_tilda.dot(e2_tilda);
+    Real h2_tilda = m2_tilda.dot(e1_tilda);
+
+    Eigen::Vector3<Real> n = e2.cross(e1).normalized();
+    Eigen::Vector3<Real> n_tilda = e1_tilda.cross(e2_tilda).normalized();
+
+    Real cos_a0 = e1.dot(e2) / (e1_norm * e2_norm);
+    Real cos_a1 = e2.dot(e0) / (e2_norm * e0_norm);
+    Real cos_a2 = -e0.dot(e1) / (e0_norm * e1_norm);
+
+    Real cos_a0_tilda =
+        e1_tilda.dot(e2_tilda) / (e1_tilda_norm * e2_tilda_norm);
+    Real cos_a1_tilda = e2_tilda.dot(e0) / (e2_tilda_norm * e0_norm);
+    Real cos_a2_tilda = -e0.dot(e1_tilda) / (e0_norm * e1_tilda_norm);
+
+    Eigen::Matrix<Real, OutputType::SizeAtCompileTime,
+                  InputType::SizeAtCompileTime>
+        J;
+    J.block(0, 0, 1, 3) = -Real(1.0) / h0 * n.transpose();
+    J.block(0, 3, 1, 3) =
+        (cos_a2 / h1 * n + cos_a2_tilda / h1_tilda * n_tilda).transpose();
+    J.block(0, 6, 1, 3) =
+        (cos_a1 / h2 * n + cos_a1_tilda / h2_tilda * n_tilda).transpose();
+    J.block(0, 9, 1, 3) = -Real(1.0) / h0_tilda * n_tilda.transpose();
+    return J;
+  }
+
+  LM_DEVICE_FUNC HessianTensor<Real,
+                               OutputType::SizeAtCompileTime,
+                               InputType::SizeAtCompileTime>
+  Hessian(const InputType &V) const {
+    Eigen::Vector3<Real> e0 = V.col(2) - V.col(1);
+    Eigen::Vector3<Real> e1 = V.col(0) - V.col(2);
+    Eigen::Vector3<Real> e2 = V.col(0) - V.col(1);
+    Eigen::Vector3<Real> e1_tilda = V.col(3) - V.col(2);
+    Eigen::Vector3<Real> e2_tilda = V.col(3) - V.col(1);
+
+    Real e0_norm_sqr = e0.squaredNorm();
+    Real e1_norm_sqr = e1.squaredNorm();
+    Real e2_norm_sqr = e2.squaredNorm();
+    Real e1_tilda_norm_sqr = e1_tilda.squaredNorm();
+    Real e2_tilda_norm_sqr = e2_tilda.squaredNorm();
+
+    Real e0_norm = sqrt(e0_norm_sqr);
+    Real e1_norm = sqrt(e1_norm_sqr);
+    Real e2_norm = sqrt(e2_norm_sqr);
+    Real e1_tilda_norm = sqrt(e1_tilda_norm_sqr);
+    Real e2_tilda_norm = sqrt(e2_tilda_norm_sqr);
+
+    Eigen::Vector3<Real> m0 =
+        -(e1 - e1.dot(e0) * e0 / e0_norm_sqr).normalized();
+    Eigen::Vector3<Real> m1 = (e2 - e2.dot(e1) * e1 / e1_norm_sqr).normalized();
+    Eigen::Vector3<Real> m2 = (e1 - e1.dot(e2) * e2 / e2_norm_sqr).normalized();
+
+    Eigen::Vector3<Real> m0_tilda =
+        -(e1_tilda - e1_tilda.dot(e0) * e0 / e0_norm_sqr).normalized();
+    Eigen::Vector3<Real> m1_tilda =
+        (e2_tilda - e2_tilda.dot(e1_tilda) * e1_tilda / e1_tilda_norm_sqr)
+            .normalized();
+    Eigen::Vector3<Real> m2_tilda =
+        (e1_tilda - e1_tilda.dot(e2_tilda) * e2_tilda / e2_tilda_norm_sqr)
+            .normalized();
+
+    Real h0 = -m0.dot(e1);
+    Real h1 = m1.dot(e2);
+    Real h2 = m2.dot(e1);
+
+    Real h0_tilda = -m0_tilda.dot(e1_tilda);
+    Real h1_tilda = m1_tilda.dot(e2_tilda);
+    Real h2_tilda = m2_tilda.dot(e1_tilda);
+
+    Eigen::Vector3<Real> n = e2.cross(e1).normalized();
+    Eigen::Vector3<Real> n_tilda = e1_tilda.cross(e2_tilda).normalized();
+
+    Real cos_a0 = e1.dot(e2) / (e1_norm * e2_norm);
+    Real cos_a1 = e2.dot(e0) / (e2_norm * e0_norm);
+    Real cos_a2 = -e0.dot(e1) / (e0_norm * e1_norm);
+
+    Real cos_a0_tilda =
+        e1_tilda.dot(e2_tilda) / (e1_tilda_norm * e2_tilda_norm);
+    Real cos_a1_tilda = e2_tilda.dot(e0) / (e2_tilda_norm * e0_norm);
+    Real cos_a2_tilda = -e0.dot(e1_tilda) / (e0_norm * e1_tilda_norm);
+#define w00 (Real(1.0) / (h0 * h0))
+#define w01 (Real(1.0) / (h0 * h1))
+#define w02 (Real(1.0) / (h0 * h2))
+#define w10 (Real(1.0) / (h1 * h0))
+#define w11 (Real(1.0) / (h1 * h1))
+#define w12 (Real(1.0) / (h1 * h2))
+#define w20 (Real(1.0) / (h2 * h0))
+#define w21 (Real(1.0) / (h2 * h1))
+#define w22 (Real(1.0) / (h2 * h2))
+
+#define w00_tilda (Real(1.0) / (h0_tilda * h0_tilda))
+#define w01_tilda (Real(1.0) / (h0_tilda * h1_tilda))
+#define w02_tilda (Real(1.0) / (h0_tilda * h2_tilda))
+#define w10_tilda (Real(1.0) / (h1_tilda * h0_tilda))
+#define w11_tilda (Real(1.0) / (h1_tilda * h1_tilda))
+#define w12_tilda (Real(1.0) / (h1_tilda * h2_tilda))
+#define w20_tilda (Real(1.0) / (h2_tilda * h0_tilda))
+#define w21_tilda (Real(1.0) / (h2_tilda * h1_tilda))
+#define w22_tilda (Real(1.0) / (h2_tilda * h2_tilda))
+
+#define M0 (n * m0.transpose())
+#define M1 (n * m1.transpose())
+#define M2 (n * m2.transpose())
+#define M0_tilda (n_tilda * m0_tilda.transpose())
+#define M1_tilda (n_tilda * m1_tilda.transpose())
+#define M2_tilda (n_tilda * m2_tilda.transpose())
+
+#define N0 (M0 / e0_norm_sqr)
+#define N0_tilda (M0_tilda / e0_norm_sqr)
+
+#define P10 (w10 * cos_a2 * M0.transpose())
+#define P11 (w11 * cos_a2 * M1.transpose())
+#define P12 (w12 * cos_a2 * M2.transpose())
+#define P20 (w20 * cos_a1 * M0.transpose())
+#define P21 (w21 * cos_a1 * M1.transpose())
+#define P22 (w22 * cos_a1 * M2.transpose())
+
+#define P10_tilda (w10_tilda * cos_a2_tilda * M0_tilda.transpose())
+#define P11_tilda (w11_tilda * cos_a2_tilda * M1_tilda.transpose())
+#define P12_tilda (w12_tilda * cos_a2_tilda * M2_tilda.transpose())
+#define P20_tilda (w20_tilda * cos_a1_tilda * M0_tilda.transpose())
+#define P21_tilda (w21_tilda * cos_a1_tilda * M1_tilda.transpose())
+#define P22_tilda (w22_tilda * cos_a1_tilda * M2_tilda.transpose())
+
+#define Q0 (w00 * M0)
+#define Q1 (w01 * M1)
+#define Q2 (w02 * M2)
+#define Q0_tilda (w00_tilda * M0_tilda)
+#define Q1_tilda (w01_tilda * M1_tilda)
+#define Q2_tilda (w02_tilda * M2_tilda)
+
+#define S(A) (A + A.transpose())
+
+    HessianTensor<Real, OutputType::SizeAtCompileTime,
+                  InputType::SizeAtCompileTime>
+        H;
+#define H_theta(i, j) H.m[0].block(i * 3, j * 3, 3, 3)
+    H_theta(0, 0) = -S(Q0);
+    H_theta(3, 3) = -S(Q0_tilda);
+    H_theta(2, 2) = S(P22) - N0 + S(P22_tilda) - N0_tilda;
+    H_theta(1, 1) = S(P11) - N0 + S(P11_tilda) - N0_tilda;
+    H_theta(1, 0) = P10 - Q1;
+    H_theta(2, 0) = P20 - Q2;
+    H_theta(1, 3) = P10_tilda - Q1_tilda;
+    H_theta(2, 3) = P20_tilda - Q2_tilda;
+    H_theta(1, 2) = P12 + P21.transpose() + N0 + P12_tilda +
+                    P21_tilda.transpose() + N0_tilda;
+    H_theta(0, 1) = H_theta(1, 0).transpose();
+    H_theta(0, 2) = H_theta(2, 0).transpose();
+    H_theta(3, 1) = H_theta(1, 3).transpose();
+    H_theta(3, 2) = H_theta(2, 3).transpose();
+    H_theta(2, 1) = H_theta(1, 2).transpose();
+
+#if !defined(__CUDA_ARCH__) && false
+    std::cout << "h0: " << h0 << std::endl;
+    std::cout << "h1: " << h1 << std::endl;
+    std::cout << "h2: " << h2 << std::endl;
+    std::cout << "~h0: " << h0_tilda << std::endl;
+    std::cout << "~h1: " << h1_tilda << std::endl;
+    std::cout << "~h2: " << h2_tilda << std::endl;
+    std::cout << "n: " << n.transpose() << std::endl;
+    std::cout << "~n: " << n_tilda.transpose() << std::endl;
+    std::cout << "m0: " << m0.transpose() << std::endl;
+    std::cout << "m1: " << m1.transpose() << std::endl;
+    std::cout << "m2: " << m2.transpose() << std::endl;
+    std::cout << "~m0: " << m0_tilda.transpose() << std::endl;
+    std::cout << "~m1: " << m1_tilda.transpose() << std::endl;
+    std::cout << "~m2: " << m2_tilda.transpose() << std::endl;
+    std::cout << "cos a0: " << cos_a0 << std::endl;
+    std::cout << "cos a1: " << cos_a1 << std::endl;
+    std::cout << "cos a2: " << cos_a2 << std::endl;
+    std::cout << "cos ~a0: " << cos_a0_tilda << std::endl;
+    std::cout << "cos ~a1: " << cos_a1_tilda << std::endl;
+    std::cout << "cos ~a2: " << cos_a2_tilda << std::endl;
+    std::cout << "M0: \n" << M0 << std::endl;
+    std::cout << "M1: \n" << M1 << std::endl;
+    std::cout << "M2: \n" << M2 << std::endl;
+    std::cout << "~M0: \n" << M0_tilda << std::endl;
+    std::cout << "~M1: \n" << M1_tilda << std::endl;
+    std::cout << "~M2: \n" << M2_tilda << std::endl;
+    std::cout << "N0: \n" << N0 << std::endl;
+    std::cout << "N1: \n" << N1 << std::endl;
+    std::cout << "N2: \n" << N2 << std::endl;
+    std::cout << "~N0: \n" << N0_tilda << std::endl;
+    std::cout << "~N1: \n" << N1_tilda << std::endl;
+    std::cout << "~N2: \n" << N2_tilda << std::endl;
+    std::cout << "P11: \n" << P11 << std::endl;
+    std::cout << "P22: \n" << P22 << std::endl;
+    std::cout << "~P11: \n" << P11_tilda << std::endl;
+    std::cout << "~P22: \n" << P22_tilda << std::endl;
+    std::cout << "S(P11): \n" << S(P11) << std::endl;
+    std::cout << "S(P22): \n" << S(P22) << std::endl;
+    std::cout << "S(~P11): \n" << S(P11_tilda) << std::endl;
+    std::cout << "S(~P22): \n" << S(P22_tilda) << std::endl;
+#endif
+    return H;
+  }
+
+  LM_DEVICE_FUNC Eigen::Matrix3<Real> SubHessian(const InputType &V,
+                                                 int subdim) const {
+    Eigen::Vector3<Real> e0 = V.col(2) - V.col(1);
+    Eigen::Vector3<Real> e1 = V.col(0) - V.col(2);
+    Eigen::Vector3<Real> e2 = V.col(0) - V.col(1);
+    Eigen::Vector3<Real> e1_tilda = V.col(3) - V.col(2);
+    Eigen::Vector3<Real> e2_tilda = V.col(3) - V.col(1);
+
+    Real e0_norm_sqr = e0.squaredNorm();
+    Real e1_norm_sqr = e1.squaredNorm();
+    Real e2_norm_sqr = e2.squaredNorm();
+    Real e1_tilda_norm_sqr = e1_tilda.squaredNorm();
+    Real e2_tilda_norm_sqr = e2_tilda.squaredNorm();
+
+    Real e0_norm = sqrt(e0_norm_sqr);
+    Real e1_norm = sqrt(e1_norm_sqr);
+    Real e2_norm = sqrt(e2_norm_sqr);
+    Real e1_tilda_norm = sqrt(e1_tilda_norm_sqr);
+    Real e2_tilda_norm = sqrt(e2_tilda_norm_sqr);
+
+    Eigen::Vector3<Real> m0 =
+        -(e1 - e1.dot(e0) * e0 / e0_norm_sqr).normalized();
+    Eigen::Vector3<Real> m1 = (e2 - e2.dot(e1) * e1 / e1_norm_sqr).normalized();
+    Eigen::Vector3<Real> m2 = (e1 - e1.dot(e2) * e2 / e2_norm_sqr).normalized();
+
+    Eigen::Vector3<Real> m0_tilda =
+        -(e1_tilda - e1_tilda.dot(e0) * e0 / e0_norm_sqr).normalized();
+    Eigen::Vector3<Real> m1_tilda =
+        (e2_tilda - e2_tilda.dot(e1_tilda) * e1_tilda / e1_tilda_norm_sqr)
+            .normalized();
+    Eigen::Vector3<Real> m2_tilda =
+        (e1_tilda - e1_tilda.dot(e2_tilda) * e2_tilda / e2_tilda_norm_sqr)
+            .normalized();
+
+    Real h0 = -m0.dot(e1);
+    Real h1 = m1.dot(e2);
+    Real h2 = m2.dot(e1);
+
+    Real h0_tilda = -m0_tilda.dot(e1_tilda);
+    Real h1_tilda = m1_tilda.dot(e2_tilda);
+    Real h2_tilda = m2_tilda.dot(e1_tilda);
+
+    Eigen::Vector3<Real> n = e2.cross(e1).normalized();
+    Eigen::Vector3<Real> n_tilda = e1_tilda.cross(e2_tilda).normalized();
+
+    Real cos_a0 = e1.dot(e2) / (e1_norm * e2_norm);
+    Real cos_a1 = e2.dot(e0) / (e2_norm * e0_norm);
+    Real cos_a2 = -e0.dot(e1) / (e0_norm * e1_norm);
+
+    Real cos_a0_tilda =
+        e1_tilda.dot(e2_tilda) / (e1_tilda_norm * e2_tilda_norm);
+    Real cos_a1_tilda = e2_tilda.dot(e0) / (e2_tilda_norm * e0_norm);
+    Real cos_a2_tilda = -e0.dot(e1_tilda) / (e0_norm * e1_tilda_norm);
+#define w00 (Real(1.0) / (h0 * h0))
+#define w01 (Real(1.0) / (h0 * h1))
+#define w02 (Real(1.0) / (h0 * h2))
+#define w10 (Real(1.0) / (h1 * h0))
+#define w11 (Real(1.0) / (h1 * h1))
+#define w12 (Real(1.0) / (h1 * h2))
+#define w20 (Real(1.0) / (h2 * h0))
+#define w21 (Real(1.0) / (h2 * h1))
+#define w22 (Real(1.0) / (h2 * h2))
+
+#define w00_tilda (Real(1.0) / (h0_tilda * h0_tilda))
+#define w01_tilda (Real(1.0) / (h0_tilda * h1_tilda))
+#define w02_tilda (Real(1.0) / (h0_tilda * h2_tilda))
+#define w10_tilda (Real(1.0) / (h1_tilda * h0_tilda))
+#define w11_tilda (Real(1.0) / (h1_tilda * h1_tilda))
+#define w12_tilda (Real(1.0) / (h1_tilda * h2_tilda))
+#define w20_tilda (Real(1.0) / (h2_tilda * h0_tilda))
+#define w21_tilda (Real(1.0) / (h2_tilda * h1_tilda))
+#define w22_tilda (Real(1.0) / (h2_tilda * h2_tilda))
+
+#define M0 (n * m0.transpose())
+#define M1 (n * m1.transpose())
+#define M2 (n * m2.transpose())
+#define M0_tilda (n_tilda * m0_tilda.transpose())
+#define M1_tilda (n_tilda * m1_tilda.transpose())
+#define M2_tilda (n_tilda * m2_tilda.transpose())
+
+#define N0 (M0 / e0_norm_sqr)
+#define N0_tilda (M0_tilda / e0_norm_sqr)
+
+#define P10 (w10 * cos_a2 * M0.transpose())
+#define P11 (w11 * cos_a2 * M1.transpose())
+#define P12 (w12 * cos_a2 * M2.transpose())
+#define P20 (w20 * cos_a1 * M0.transpose())
+#define P21 (w21 * cos_a1 * M1.transpose())
+#define P22 (w22 * cos_a1 * M2.transpose())
+
+#define P10_tilda (w10_tilda * cos_a2_tilda * M0_tilda.transpose())
+#define P11_tilda (w11_tilda * cos_a2_tilda * M1_tilda.transpose())
+#define P12_tilda (w12_tilda * cos_a2_tilda * M2_tilda.transpose())
+#define P20_tilda (w20_tilda * cos_a1_tilda * M0_tilda.transpose())
+#define P21_tilda (w21_tilda * cos_a1_tilda * M1_tilda.transpose())
+#define P22_tilda (w22_tilda * cos_a1_tilda * M2_tilda.transpose())
+
+#define Q0 (w00 * M0)
+#define Q1 (w01 * M1)
+#define Q2 (w02 * M2)
+#define Q0_tilda (w00_tilda * M0_tilda)
+#define Q1_tilda (w01_tilda * M1_tilda)
+#define Q2_tilda (w02_tilda * M2_tilda)
+
+#define S(A) (A + A.transpose())
+    switch (subdim) {
+      case 0:
+        return -S(Q0);
+      case 1:
+        return S(P11) - N0 + S(P11_tilda) - N0_tilda;
+      case 2:
+        return S(P22) - N0 + S(P22_tilda) - N0_tilda;
+      case 3:
+        return -S(Q0_tilda);
+      default:
+        return Eigen::Matrix3<Real>::Zero();
+    }
+  }
+};
+
 }  // namespace grassland

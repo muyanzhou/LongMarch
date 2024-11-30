@@ -1,32 +1,22 @@
 #include "cmath"
+#include "grassland/physics/dihedral_angle.h"
 #include "iostream"
-#include "long_march.h"
 #include "thrust/device_vector.h"
 #include "thrust/host_vector.h"
 
-using namespace long_march;
+using namespace grassland;
 
 using real = float;
 
 int main() {
-  std::vector<geometry::Vector3<real>> positions = {
-      {0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0},
-      {0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1},
-  };
-  std::vector<uint32_t> indices = {
-      0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4,
-      1, 2, 6, 1, 6, 5, 2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7,
-  };
-  geometry::Mesh<real> mesh(positions.size(), indices.size(), indices.data(),
-                            positions.data());
-  mesh.SplitVertices();
-  mesh.MergeVertices();
-  mesh.GenerateNormals();
-  mesh.InitializeTexCoords();
-  mesh.GenerateTangents();
-  mesh.SaveObjFile("cube.obj");
+  Eigen::Vector3<real> x0(0, 1, 0);
+  Eigen::Vector3<real> x1(0, 0, 1);
+  Eigen::Vector3<real> x2(0, 0, -1);
+  Eigen::Vector3<real> x3(-1, 0, 0);
+  Eigen::Matrix<real, 3, 4> X;
+  X << x0, x1, x2, x3;
 
-  mesh.LoadObjFile("matball.obj");
-  mesh.GenerateTangents();
-  mesh.SaveObjFile("matball_write.obj");
+  DihedralAngle<real> dihedral_angle;
+  std::cout << dihedral_angle(X).value() << std::endl;
+  std::cout << dihedral_angle.Hessian(X) << std::endl;
 }
