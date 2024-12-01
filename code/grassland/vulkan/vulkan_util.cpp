@@ -253,7 +253,7 @@ std::string VkPresentModeToName(VkPresentModeKHR present_mode) {
 }
 
 void ThrowError(const std::string &message) {
-  throw std::runtime_error(message);
+  throw std::runtime_error("[Vulkan]" + message);
 }
 
 void ThrowIfFailed(VkResult result, const std::string &message) {

@@ -2,6 +2,11 @@
 
 #define NOMINMAX
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
 #include "grassland/util/double_ptr.h"
 #include "grassland/util/event_manager.h"
 #include "grassland/util/log.h"

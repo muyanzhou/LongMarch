@@ -9,6 +9,13 @@ struct PipelineSettings {
                             const PipelineLayout *pipeline_layout = nullptr,
                             int subpass = 0);
 
+  explicit PipelineSettings(
+      const PipelineLayout *pipeline_layout = nullptr,
+      const std::vector<VkFormat> &color_attachment_formats = {},
+      VkFormat depth_attachment_format = VK_FORMAT_UNDEFINED);
+
+  void PipelineSettingsCommon();
+
   void AddShaderStage(ShaderModule *shader_module, VkShaderStageFlagBits stage);
 
   void AddInputBinding(
@@ -83,6 +90,10 @@ struct PipelineSettings {
       tessellation_state_create_info;
 
   int subpass{};
+
+  // Dynamic rendering state
+  std::vector<VkFormat> color_attachment_formats{};
+  VkFormat depth_attachment_format{VK_FORMAT_UNDEFINED};
 };
 
 class Pipeline {
