@@ -228,34 +228,17 @@ void Application::OnRender() {
 
   VkCommandBuffer command_buffer = command_buffers_[current_frame_]->Handle();
 
-  // Begin RenderPass
+  VkClearColorValue clear_color = {{0.6f, 0.7f, 0.8f, 1.0f}};
+
   long_march::vulkan::TransitImageLayout(
       command_buffer, frame_image_->Handle(), VK_IMAGE_LAYOUT_UNDEFINED,
-      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+      VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
       VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, VK_IMAGE_ASPECT_COLOR_BIT);
 
-  VkClearColorValue clear_color = {{0.6f, 0.7f, 0.8f, 1.0f}};
-  VkImageSubresourceRange subresource_range{};
-  subresource_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  subresource_range.levelCount = 1;
-  subresource_range.layerCount = 1;
-  subresource_range.baseMipLevel = 0;
-  subresource_range.baseArrayLayer = 0;
-  vkCmdClearColorImage(command_buffer, frame_image_->Handle(),
-                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clear_color, 1,
-                       &subresource_range);
-
-  long_march::vulkan::TransitImageLayout(
-      command_buffer, frame_image_->Handle(),
-      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-      VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0,
-      0, VK_IMAGE_ASPECT_COLOR_BIT);
-
   VkRenderingAttachmentInfo attachment_info{};
-  attachment_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  attachment_info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
   attachment_info.imageView = frame_image_->ImageView();
-  attachment_info.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  attachment_info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
   attachment_info.clearValue.color = clear_color;
   attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   attachment_info.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -267,7 +250,8 @@ void Application::OnRender() {
   rendering_info.renderArea.extent = frame_image_->Extent();
   rendering_info.layerCount = 1;
 
-  vkCmdBeginRendering(command_buffer, &rendering_info);
+  instance_->Procedures().vkCmdBeginRenderingKHR(command_buffer,
+                                                 &rendering_info);
 
   // Bind Pipeline
   vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -302,7 +286,7 @@ void Application::OnRender() {
   vkCmdDrawIndexed(command_buffer, 3, 1, 0, 0, 0);
 
   // End RenderPass
-  vkCmdEndRendering(command_buffer);
+  instance_->Procedures().vkCmdEndRenderingKHR(command_buffer);
 
   // Transition swapchain_image layout from UNDEFINED to TRANSFER_DST
   long_march::vulkan::TransitImageLayout(
@@ -322,7 +306,7 @@ void Application::OnRender() {
   copy_region.extent.depth = 1;
 
   vkCmdCopyImage(command_buffer, frame_image_->Handle(),
-                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, swapchain_image,
+                 VK_IMAGE_LAYOUT_GENERAL, swapchain_image,
                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
 
   // Transition swapchain_image layout from TRANSFER_DST to PRESENT_SRC

@@ -72,6 +72,7 @@ PipelineSettings::PipelineSettings(
       color_attachment_formats(color_attachment_formats),
       depth_attachment_format(depth_attachment_format),
       subpass(0) {
+  PipelineSettingsCommon();
   if (depth_attachment_format != VK_FORMAT_UNDEFINED) {
     depth_stencil_state_create_info = VkPipelineDepthStencilStateCreateInfo{
         VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
