@@ -547,6 +547,42 @@ VkResult Device::CreateSampler(VkFilter mag_filter,
   return VK_SUCCESS;
 }
 
+VkResult Device::CreateMipmapSampler(uint32_t mip_levels,
+                               double_ptr<Sampler> pp_sampler) const {
+  if (!pp_sampler) {
+    SetErrorMessage("pp_sampler is nullptr");
+    return VK_ERROR_INITIALIZATION_FAILED;
+  }
+
+  VkSamplerCreateInfo sampler_create_info{};
+  sampler_create_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+  sampler_create_info.magFilter = VK_FILTER_LINEAR;
+  sampler_create_info.minFilter = VK_FILTER_LINEAR;
+  sampler_create_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  sampler_create_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  sampler_create_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  sampler_create_info.anisotropyEnable = VK_FALSE;
+  sampler_create_info.maxAnisotropy = 1.0f;
+  sampler_create_info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+  sampler_create_info.unnormalizedCoordinates = VK_FALSE;
+  sampler_create_info.compareEnable = VK_FALSE;
+  sampler_create_info.compareOp = VK_COMPARE_OP_ALWAYS;
+  sampler_create_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+  sampler_create_info.mipLodBias = 0.0f;
+  sampler_create_info.minLod = 0.0f;
+  sampler_create_info.maxLod = static_cast<float>(mip_levels);
+
+  VkSampler sampler;
+
+  RETURN_IF_FAILED_VK(
+      vkCreateSampler(device_, &sampler_create_info, nullptr, &sampler),
+      "failed to create texture sampler!");
+
+  pp_sampler.construct(this, sampler);
+
+  return VK_SUCCESS;
+}
+
 VkResult Device::CreateBuffer(VkDeviceSize size,
                               VkBufferUsageFlags usage,
                               VmaMemoryUsage memory_usage,

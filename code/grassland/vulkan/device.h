@@ -142,6 +142,9 @@ class Device {
                          VkBorderColor border_color,
                          VkSamplerMipmapMode mipmap_mode,
                          double_ptr<Sampler> pp_sampler) const;
+  
+  VkResult CreateMipmapSampler(uint32_t mip_levels,
+                         double_ptr<Sampler> pp_sampler) const;
 
   VkResult CreateBuffer(VkDeviceSize size,
                         VkBufferUsageFlags usage,
