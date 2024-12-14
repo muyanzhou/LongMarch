@@ -161,7 +161,7 @@ class Device {
       const std::vector<VkDescriptorSetLayout> &descriptor_set_layouts,
       double_ptr<PipelineLayout> pp_pipeline_layout) const;
 
-  VkResult CreatePipeline(struct PipelineSettings settings,
+  VkResult CreatePipeline(const struct PipelineSettings &settings,
                           double_ptr<Pipeline> pp_pipeline) const;
 
   VkResult CreateBottomLevelAccelerationStructure(

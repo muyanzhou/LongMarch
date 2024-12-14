@@ -1,6 +1,6 @@
 #pragma once
 
-#include "grassland/vulkan/vulkan_utils.h"
+#include "grassland/vulkan/vulkan_util.h"
 
 namespace grassland::vulkan {
 class InstanceProcedures {
@@ -10,5 +10,7 @@ class InstanceProcedures {
   GRASSLAND_VULKAN_PROCEDURE_VAR(vkCreateDebugUtilsMessengerEXT);
   GRASSLAND_VULKAN_PROCEDURE_VAR(vkDestroyDebugUtilsMessengerEXT);
   GRASSLAND_VULKAN_PROCEDURE_VAR(vkSetDebugUtilsObjectNameEXT);
+  GRASSLAND_VULKAN_PROCEDURE_VAR(vkCmdBeginRenderingKHR);
+  GRASSLAND_VULKAN_PROCEDURE_VAR(vkCmdEndRenderingKHR);
 };
 }  // namespace grassland::vulkan

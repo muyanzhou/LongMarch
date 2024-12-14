@@ -62,6 +62,7 @@ DeviceFeatureRequirement::GenerateRecommendedDeviceCreateInfo(
 #endif
   create_info.AddExtension(VK_KHR_MAINTENANCE3_EXTENSION_NAME);
   create_info.AddExtension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+  create_info.AddExtension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
 
   if (enable_raytracing_extension) {
     create_info.AddExtension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
@@ -111,7 +112,13 @@ DeviceFeatureRequirement::GenerateRecommendedDeviceCreateInfo(
   physical_device_descriptor_indexing_features.runtimeDescriptorArray = VK_TRUE;
   physical_device_descriptor_indexing_features
       .descriptorBindingVariableDescriptorCount = VK_TRUE;
+  VkPhysicalDeviceDynamicRenderingFeaturesKHR
+      physical_device_dynamic_rendering_features{};
+  physical_device_dynamic_rendering_features.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
+  physical_device_dynamic_rendering_features.dynamicRendering = VK_TRUE;
   create_info.AddFeature(physical_device_descriptor_indexing_features);
+  create_info.AddFeature(physical_device_dynamic_rendering_features);
 
   //        VkPhysicalDeviceSynchronization2FeaturesKHR
   //                physical_device_synchronization2_features{};

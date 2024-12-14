@@ -648,7 +648,7 @@ VkResult Device::CreatePipelineLayout(
   return VK_SUCCESS;
 }
 
-VkResult Device::CreatePipeline(struct PipelineSettings settings,
+VkResult Device::CreatePipeline(const struct PipelineSettings &settings,
                                 double_ptr<Pipeline> pp_pipeline) const {
   if (!pp_pipeline) {
     SetErrorMessage("pp_pipeline is nullptr");
@@ -702,7 +702,22 @@ VkResult Device::CreatePipeline(struct PipelineSettings settings,
   }
 
   VkGraphicsPipelineCreateInfo pipeline_create_info{};
+
   pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+
+  VkPipelineRenderingCreateInfoKHR rendering_create_info{};
+  if (!settings.render_pass) {
+    rendering_create_info.sType =
+        VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
+    rendering_create_info.colorAttachmentCount =
+        settings.color_attachment_formats.size();
+    rendering_create_info.pColorAttachmentFormats =
+        settings.color_attachment_formats.data();
+    rendering_create_info.depthAttachmentFormat =
+        settings.depth_attachment_format;
+    pipeline_create_info.pNext = &rendering_create_info;
+  }
+
   pipeline_create_info.stageCount = settings.shader_stage_create_infos.size();
   pipeline_create_info.pStages = settings.shader_stage_create_infos.data();
   pipeline_create_info.pVertexInputState = &vertex_input_info;
@@ -716,7 +731,8 @@ VkResult Device::CreatePipeline(struct PipelineSettings settings,
   pipeline_create_info.pColorBlendState = &color_blend_state;
   pipeline_create_info.pDynamicState = &dynamic_state;
   pipeline_create_info.layout = settings.pipeline_layout->Handle();
-  pipeline_create_info.renderPass = settings.render_pass->Handle();
+  pipeline_create_info.renderPass =
+      settings.render_pass ? settings.render_pass->Handle() : VK_NULL_HANDLE;
   pipeline_create_info.pDepthStencilState =
       settings.depth_stencil_state_create_info.has_value()
           ? &settings.depth_stencil_state_create_info.value()
