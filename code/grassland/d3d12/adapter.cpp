@@ -2,7 +2,7 @@
 
 #include <utility>
 
-#include "../../../cmake-build-release/vcpkg_installed/x64-windows/include/gtest/gtest.h"
+#include <gtest/gtest.h>
 
 namespace grassland::d3d12 {
 
